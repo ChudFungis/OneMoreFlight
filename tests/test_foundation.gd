@@ -181,6 +181,7 @@ func run_checks() -> void:
 		check(GameManager.phase == ("event" if day == 3 else "transition"), "New chapter event cadence failed")
 		if day == 3:
 			GameManager.resolve_event()
+	await check_savings_hud()
 	await check_presentation()
 	await capture_decisions()
 	# Deterministic complete games at different tapping rates, using real timers/income.
@@ -879,3 +880,44 @@ func check_seamless_flow() -> void:
 	check(GameManager.phase == "work" and GameManager.days == 1 and GameManager.remaining > 9.7, "Next workday did not begin automatically")
 	GameManager.set_process(false)
 	resume_ambient_pause = false
+
+func check_savings_hud() -> void:
+	GameManager.new_game()
+	GameManager.start_shift()
+	await get_tree().process_frame
+	var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	var previous := GameManager.snapshot()
+	check(screen.money_label.text == "$0" and screen.goal_label.text == "$2,100", "HUD initial values incorrect")
+	GameManager.tap()
+	check(screen.money_label.text == "$5" and screen.savings_tween != null, "Savings feedback did not follow real earnings")
+	GameManager.apply_upgrade(item("flights"))
+	screen.refresh()
+	check(screen.goal_label.text == screen.currency(GameManager.goal()), "HUD ignored goal discount")
+	await capture_view("savings", 390)
+	GameManager.money = GameManager.goal() - 1
+	screen.refresh()
+	var remaining := GameManager.remaining
+	GameManager.tap()
+	check(screen.progress_target == 100 and screen.hud_goal_reached, "HUD did not celebrate goal crossing")
+	check(GameManager.phase == "work" and GameManager.remaining == remaining, "HUD interrupted active workday")
+	await capture_view("savings_goal", 390)
+	var before := GameManager.snapshot()
+	screen.refresh()
+	check(GameManager.snapshot() == before, "HUD rendering mutated campaign")
+	await get_tree().create_timer(0.25).timeout
+	check(screen.progress.value == 100, "Animated fill exceeded or missed its cap")
+	for width: int in [320, 390]:
+		get_tree().root.size = Vector2i(width, 844)
+		GameManager.money = 1234567890123
+		screen.refresh()
+		await capture_view("savings_large", width)
+		check(screen.money_label.get_global_rect().end.x <= screen.goal_label.global_position.x, "Large currency overlaps goal")
+		check(screen.goal_label.get_global_rect().end.x <= screen.size.x - 20, "Goal exceeds mobile width")
+	var reduced := FlightStyle.reduced_motion
+	FlightStyle.reduced_motion = true
+	GameManager.money = 100
+	screen.refresh()
+	check(is_equal_approx(screen.progress.value, screen.progress_target), "Reduced-motion bar is still tweening")
+	FlightStyle.reduced_motion = reduced
+	GameManager.restore(previous)
+	get_tree().root.size = Vector2i(390, 844)

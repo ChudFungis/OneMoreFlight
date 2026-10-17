@@ -31,7 +31,7 @@ During v0.3, no browser build could be produced because matching Godot 4.7.2 Web
 
 ## v0.3.1 home and results
 
-The home screen now centers the existing pixel heart under “One More Flight ♡” and “Every tap brings us closer.” Tapping starts fresh in one step. A compact best-adventure panel and small trophy Results/gear Settings controls replace the old menu buttons. Home content is centered within 520 logical pixels on wide windows and fits the tested portrait viewports without scrolling. Missing results use an inviting first-record message.
+The home screen now centers the existing pixel heart under “One More Flight” and “Every tap brings us closer.” Tapping starts fresh in one step. A compact best-adventure panel and small trophy Results/gear Settings controls replace the old menu buttons. Home content is centered within 520 logical pixels on wide windows and fits the tested portrait viewports without scrolling. Missing results use an inviting first-record message.
 
 Your Adventures shows the retained personal best, the newest five completed runs, attempt IDs, UTC dates and per-chapter days when available. Hearts mark scores tied with the current best. The final summary leads with actual workdays and a new-best badge when earned, followed by the unchanged illustration/narrative and Home/Start another adventure actions. Existing workday and decision visuals are unchanged. Only the home heart's optional action required a small shared-component extension; the gameplay action remains the default.
 
@@ -56,3 +56,11 @@ Baloo 2 is bundled with its OFL license in assets/fonts. FontVariation resources
 All mapped illustrations are retained. FlightArt now uses nearest filtering consistently; smooth text remains antialiased. New pause/home pixel icons use the existing 7x7 UI grid. Shared heart/sparkle dividers add static decoration to home, stories, Pause and keepsakes. Existing brief entrances, reward feedback and selection animations remain bounded and respect reduced motion. No continuous particle loop was added.
 
 Pause emphasizes Resume, with compact icon-and-label Settings and Save & Main Menu beneath. The latter label is intentionally retained: the existing handler persists the run; home still starts a fresh run. This iteration changes no save/navigation rules. Existing reward selection/confirmation is retained, with no extra confirmation step.
+
+## Split savings HUD
+
+Gameplay uses equal-width SAVED and FLIGHT GOAL columns, aligned to opposite edges above a full-width bar. Baloo Bold currency includes grouping separators, shrinks from 24 to 16 logical pixels as needed, then wraps exceptionally long values within its own column. Captions remain visible. The source values always come directly from GameManager.money and GameManager.goal().
+
+The number briefly changes tint on real savings increases, including passive income; the bounded 0.18-second tween is reused during rapid earnings. Progress eases toward a clamped 0–100% target over 0.16 seconds, retargeting from its current fill. Reduced motion sets the fill immediately. A single short, input-ignoring sparkle burst marks the first visible goal crossing; it never pauses work or calls a progression action. Rebuilding initializes from current savings without replaying an already-achieved goal. Existing workday settlement still owns chapter completion.
+
+The route row above savings keeps Monterrey on the left and the chapter destination flush right, with a small nearest-filtered pixel airplane between them. Both labels wrap within equal flexible columns on narrow screens; destination strings and gameplay data are unchanged. The icon follows the existing `assets/art/ui/airplane` fallback mapping.

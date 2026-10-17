@@ -51,7 +51,7 @@ func _ready() -> void:
 	if not is_relic and item.id == "cabrito":
 		add_label(content, "Repeatable refill · %d / %d shared charges remaining" % [GameManager.burst_clicks, GameManager.balance.burst_cap], 15, FlightStyle.MUTED)
 	var done := Button.new()
-	done.text = "Close ♡"
+	done.text = "Close"
 	FlightStyle.style_button(done)
 	done.custom_minimum_size.y = 52
 	done.pressed.connect(close)

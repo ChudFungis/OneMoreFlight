@@ -1,6 +1,6 @@
 # One More Flight
 
-A mobile-first, romantic incremental roguelike clicker about Dani’s Monterrey spa, Josh, and three trips that bring them closer. Built with Godot 4 / typed GDScript, no plugins or third-party dependencies. Compatibility rendering supports Intel Macs and the intended Web build.
+A mobile-first, romantic incremental roguelike clicker about Dany’s Monterrey spa, Josh, and three trips that bring them closer. Built with Godot 4 / typed GDScript, no plugins or third-party dependencies. Compatibility rendering supports Intel Macs and the intended Web build.
 
 ## Play
 

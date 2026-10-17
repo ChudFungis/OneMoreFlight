@@ -4,7 +4,7 @@
 script = ExtResource("1")
 id = "team"
 title = "Girls’ Night Boost"
-description = "A night out with the girls gives Dani the encouragement to keep going a little longer.\n+2 seconds per level; max 2 levels (+4 seconds), subject to the shared +6-second extension cap."
+description = "A night out with the girls gives Dany the encouragement to keep going a little longer.\n+2 seconds per level; max 2 levels (+4 seconds), subject to the shared +6-second extension cap."
 effect = "time"
 amount = 2
 max_level = 2

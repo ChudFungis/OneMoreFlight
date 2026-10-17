@@ -4,6 +4,6 @@
 script = ExtResource("1")
 id = "postcard"
 title = "Brian Merge"
-description = "Dani reads Josh’s mind so well that she has started borrowing his brainpower.\n+2 base-tap equivalents per second during active work."
+description = "Dany reads Josh’s mind so well that she has started borrowing his brainpower.\n+2 base-tap equivalents per second during active work."
 effect = "passive"
 amount = 2

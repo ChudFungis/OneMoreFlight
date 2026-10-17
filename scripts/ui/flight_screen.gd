@@ -5,6 +5,13 @@ const STORY = preload("res://resources/story.tres")
 const WORKDAY_TRANSITION_SECONDS := 0.4
 @export var view: String = "main_menu"
 var body: VBoxContainer
+var goal_label: Label
+var progress_tween: Tween
+var savings_tween: Tween
+var progress_target: float = -1.0
+var displayed_savings: float = -1.0
+var hud_initialized: bool = false
+var hud_goal_reached: bool = false
 var money_label: Label
 var timer_label: Label
 var item_lists: VBoxContainer
@@ -80,6 +87,15 @@ func rebuild() -> void:
 	choice_grid = null
 	heart_image = null
 	effects_label = null
+	if progress_tween != null:
+		progress_tween.kill()
+	if savings_tween != null:
+		savings_tween.kill()
+	goal_label = null
+	progress_target = -1.0
+	displayed_savings = -1.0
+	hud_initialized = false
+	hud_goal_reached = false
 	money_label = null
 	timer_label = null
 	item_lists = null
@@ -118,11 +134,11 @@ func rebuild() -> void:
 		create_tween().tween_property(body, "modulate:a", 1.0, FlightStyle.ENTER_SECONDS)
 	if view == "game":
 		if GameManager.phase == "upgrades" and last_phase == "work":
-			celebrate("Workday complete ♡")
+			celebrate("Workday complete")
 		elif GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades", "event"]:
 			celebrate("One flight closer ✦")
 		if GameManager.phase == "ending" and last_phase != "ending":
-			celebrate("You made it! ♡", true)
+			celebrate("You made it!", true)
 		last_phase = GameManager.phase
 		if GameManager.phase in ["transition", "ready"]:
 			arm_workday(rebuild_generation)
@@ -181,9 +197,8 @@ func pixel_divider() -> void:
 
 func build_menu() -> void:
 	pixel_divider()
-	centered_label("A LITTLE ADVENTURE FOR YOU ♡", 12, FlightStyle.MUTED)
-	centered_label("One More Flight ♡", 36, FlightStyle.BURGUNDY)
-	centered_label("Every tap brings us closer.", 17, FlightStyle.MUTED)
+	centered_label("A LITTLE ADVENTURE FOR YOU", 12, FlightStyle.MUTED)
+	centered_label("One More Flight", 36, FlightStyle.BURGUNDY)
 	var space := Control.new()
 	space.custom_minimum_size.y = 12
 	body.add_child(space)
@@ -191,7 +206,7 @@ func build_menu() -> void:
 	tap_button.name = "HomeHeart"
 	tap_button.tooltip_text = "Start a fresh adventure"
 	tap_button.custom_minimum_size.y = 275
-	centered_label("Tap to begin ♡", 18, FlightStyle.BURGUNDY)
+	centered_label("Tap to begin", 18, FlightStyle.BURGUNDY)
 	var panel := PanelContainer.new()
 	body.add_child(panel)
 	var content := VBoxContainer.new()
@@ -199,7 +214,7 @@ func build_menu() -> void:
 	panel.add_child(content)
 	var previous := body
 	body = content
-	centered_label("Your Best Adventure ♡", 18, FlightStyle.BURGUNDY)
+	centered_label("Your Best Adventure", 18, FlightStyle.BURGUNDY)
 	var best: Dictionary = SaveManager.results.best
 	if best.is_empty():
 		centered_label("Complete a story to set your first record.", 15, FlightStyle.MUTED)
@@ -238,13 +253,13 @@ func show_home() -> void:
 	rebuild()
 
 func build_results() -> void:
-	centered_label("Your Adventures ♡", 29, FlightStyle.BURGUNDY)
+	centered_label("Your Adventures", 29, FlightStyle.BURGUNDY)
 	var results: FlightResults = SaveManager.results
 	if results.best.is_empty():
-		centered_label("No adventures completed yet. Your first one is waiting! ♡", 18)
+		centered_label("No adventures completed yet. Your first one is waiting!", 18)
 	else:
 		centered_label("YOUR PERSONAL BEST", 13, FlightStyle.MUTED)
-		centered_label("%d workdays ♡" % int(results.best.total_days), 30, FlightStyle.BURGUNDY)
+		centered_label("%d workdays" % int(results.best.total_days), 30, FlightStyle.BURGUNDY)
 		centered_label("Your five most recent adventures", 15, FlightStyle.MUTED)
 		for record: Dictionary in results.recent:
 			var panel := PanelContainer.new()
@@ -255,16 +270,16 @@ func build_results() -> void:
 			var previous := body
 			body = content
 			var tied_best := int(record.total_days) == int(results.best.total_days)
-			label_text("%s%d workdays" % ["♡  " if tied_best else "", int(record.total_days)], 21, FlightStyle.BURGUNDY)
+			label_text("%s%d workdays" % ["BEST · " if tied_best else "", int(record.total_days)], 21, FlightStyle.BURGUNDY)
 			var date := str(record.completed_at).get_slice("T", 0)
 			label_text("Adventure #%d%s" % [int(record.attempt), " · " + date + " UTC" if not date.is_empty() else ""], 14, FlightStyle.MUTED)
 			if record.chapter_days.size() == 3:
 				label_text("Denver %d · Italy %d · Our Future %d" % record.chapter_days, 14, FlightStyle.MUTED)
 			body = previous
-	button("Back ♡", show_home)
+	button("Back", show_home)
 
 func build_pause() -> void:
-	centered_label("A Little Breather ♡", 29, FlightStyle.BURGUNDY)
+	centered_label("A Little Breather", 29, FlightStyle.BURGUNDY)
 	centered_label("Josh can wait a minute. Probably.", 18)
 	pixel_divider()
 	button("Resume", SceneManager.resume_run, true)
@@ -323,12 +338,8 @@ func build_game() -> void:
 	var shown_day := GameManager.days if GameManager.phase in ["upgrades", "event"] else GameManager.days + 1
 	label_text("ONE MORE FLIGHT   /   CHAPTER %d · DAY %d" % [GameManager.chapter + 1, shown_day], 13, FlightStyle.MUTED)
 	if GameManager.phase in ["work", "ready", "transition"]:
-		label_text(GameManager.DESTINATIONS[GameManager.chapter], 23)
-		money_label = label_text("", 22, FlightStyle.BURGUNDY)
-		progress = ProgressBar.new()
-		progress.custom_minimum_size.y = 8
-		progress.show_percentage = false
-		body.add_child(progress)
+		build_flight_route()
+		build_savings_hud()
 	match GameManager.phase:
 		"ready", "transition", "work":
 			timer_label = label_text("", 30, FlightStyle.BURGUNDY)
@@ -347,11 +358,11 @@ func build_game() -> void:
 		"story": build_story()
 		"relic":
 			pixel_divider()
-			label_text("A Memory to Keep ♡", 28, FlightStyle.BURGUNDY)
+			label_text("A Memory to Keep", 28, FlightStyle.BURGUNDY)
 			label_text("Choose one keepsake. Its bonus stays for every chapter ahead.", 16)
 			build_choices(true)
 		"ending":
-			label_text("You made it! ♡", 28, FlightStyle.BURGUNDY)
+			label_text("You made it!", 28, FlightStyle.BURGUNDY)
 			label_text("Your adventure took %d workdays." % GameManager.total_days, 21)
 			if GameManager.run_new_best:
 				label_text("NEW PERSONAL BEST!", 18, FlightStyle.BURGUNDY)
@@ -363,7 +374,7 @@ func build_game() -> void:
 				button("Retry saving results", func() -> void:
 					SaveManager.results.save_data()
 					rebuild())
-			button("Home ♡", GameManager.main_menu)
+			button("Home", GameManager.main_menu)
 			button("Start another adventure", restart_adventure, true)
 	if GameManager.phase in ["ready", "transition", "work"]:
 		build_item_lists()
@@ -556,7 +567,7 @@ func select_choice(id: String) -> void:
 		if not FlightStyle.reduced_motion:
 			card.modulate = Color.WHITE if key == id else Color(1, 1, 1, 0.65)
 	confirm_button.disabled = false
-	confirm_button.text = "Keep this memory ♡" if relic else "Take this ability ♡"
+	confirm_button.text = "Keep this memory" if relic else "Take this ability"
 	if not FlightStyle.reduced_motion:
 		var card: Button = selection_cards[id]
 		var tween := card.create_tween()
@@ -574,7 +585,7 @@ func commit_choice() -> void:
 		GameManager.choose_relic(id)
 	else:
 		GameManager.buy_upgrade(id)
-	celebrate("A memory for every flight ♡" if relic else "Ability tucked away ♡", relic)
+	celebrate("A memory for every flight" if relic else "Ability tucked away", relic)
 
 func adapt_layout() -> void:
 	if not is_instance_valid(body):
@@ -610,7 +621,7 @@ func build_event() -> void:
 	label_text(event.title, 27)
 	artwork(event.id, 175, "events", event.icon)
 	label_text(event.description.get_slice("\n", 0), 18)
-	button((event.choice if not event.alternative.is_empty() else "Continue ♡") + "\n" + event_reward(event, false), func() -> void: commit_event(false), true)
+	button((event.choice if not event.alternative.is_empty() else "Continue") + "\n" + event_reward(event, false), func() -> void: commit_event(false), true)
 	if not event.alternative.is_empty():
 		button(event.alternative + "\n" + event_reward(event, true), func() -> void: commit_event(true))
 
@@ -619,22 +630,121 @@ func commit_event(alternative: bool) -> void:
 		return
 	decision_locked = true
 	GameManager.resolve_event(alternative)
-	celebrate("A lovely little bonus ♡")
+	celebrate("A lovely little bonus")
 
 func build_story() -> void:
 	pixel_divider()
 	artwork(STORY.illustrations[GameManager.chapter], 280)
 	label_text(STORY.titles[GameManager.chapter], 27, FlightStyle.BURGUNDY)
 	label_text(STORY.paragraphs[GameManager.chapter])
-	button("Our next chapter ♡" if GameManager.chapter < 2 else "Come home ♡", GameManager.finish_story, true)
+	button("Our next chapter" if GameManager.chapter < 2 else "Come home", GameManager.finish_story, true)
+
+func build_flight_route() -> void:
+	var route := HBoxContainer.new()
+	route.add_theme_constant_override("separation", 10)
+	body.add_child(route)
+	var stops: PackedStringArray = str(GameManager.DESTINATIONS[GameManager.chapter]).split(" → ")
+	var previous := body
+	# Labels use the same heading treatment while keeping both ends readable.
+	for index: int in range(2):
+		var column := VBoxContainer.new()
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		route.add_child(column)
+		body = column
+		var stop := label_text(stops[index], 23, FlightStyle.BURGUNDY)
+		stop.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if index == 0 else HORIZONTAL_ALIGNMENT_RIGHT
+		if index == 0:
+			var plane := FlightArt.image("ui", "airplane")
+			plane.custom_minimum_size = Vector2(24, 24)
+			plane.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			route.add_child(plane)
+	body = previous
+
+func build_savings_hud() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	body.add_child(row)
+	var previous := body
+	for is_goal: bool in [false, true]:
+		var column := VBoxContainer.new()
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_stretch_ratio = 1.0
+		column.add_theme_constant_override("separation", 0)
+		row.add_child(column)
+		body = column
+		var caption := label_text("FLIGHT GOAL" if is_goal else "SAVED", 13, FlightStyle.MUTED)
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if is_goal else HORIZONTAL_ALIGNMENT_LEFT
+		var value := label_text("", 24, FlightStyle.BURGUNDY)
+		value.add_theme_font_override("font", FlightStyle.FONT_BOLD)
+		value.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		value.horizontal_alignment = caption.horizontal_alignment
+		value.resized.connect(func() -> void: fit_currency(value))
+		if is_goal:
+			goal_label = value
+		else:
+			money_label = value
+	body = previous
+	progress = ProgressBar.new()
+	progress.step = 0.0
+	progress.custom_minimum_size.y = 12
+	progress.show_percentage = false
+	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(progress)
+
+func currency(amount: float) -> String:
+	var digits := "%.0f" % amount
+	var grouped := ""
+	for index: int in range(digits.length()):
+		if index > 0 and (digits.length() - index) % 3 == 0:
+			grouped += ","
+		grouped += digits[index]
+	return "$" + grouped
+
+func fit_currency(value: Label) -> void:
+	var font_size := 24
+	while font_size > 16 and FlightStyle.FONT_BOLD.get_string_size(value.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > value.size.x:
+		font_size -= 1
+	value.add_theme_font_size_override("font_size", font_size)
+
+func pulse_savings() -> void:
+	if not is_instance_valid(money_label):
+		return
+	if savings_tween != null and savings_tween.is_running():
+		return
+	money_label.modulate = FlightStyle.ROSE
+	savings_tween = money_label.create_tween()
+	savings_tween.tween_property(money_label, "modulate", Color.WHITE, 0.18)
 
 func refresh() -> void:
-	if is_instance_valid(money_label):
-		money_label.text = "$%.0f saved  /  $%.0f goal" % [GameManager.money, GameManager.goal()]
+	if is_instance_valid(money_label) and is_instance_valid(goal_label):
+		if displayed_savings >= 0 and GameManager.money > displayed_savings:
+			pulse_savings()
+		displayed_savings = GameManager.money
+		money_label.text = currency(GameManager.money)
+		goal_label.text = currency(GameManager.goal())
+		fit_currency(money_label)
+		fit_currency(goal_label)
 	if is_instance_valid(progress):
-		progress.value = minf(100, GameManager.money / GameManager.goal() * 100)
+		var target := clampf(GameManager.money / maxf(GameManager.goal(), 0.01) * 100.0, 0, 100)
+		if not hud_initialized or FlightStyle.reduced_motion:
+			if progress_tween != null:
+				progress_tween.kill()
+			progress.value = target
+		elif not is_equal_approx(target, progress_target):
+			if progress_tween != null:
+				progress_tween.kill()
+			progress_tween = progress.create_tween()
+			progress_tween.tween_property(progress, "value", target, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		if hud_initialized and not hud_goal_reached and target >= 100:
+			# Visual only: work continues; GameManager settles the milestone.
+			feedback("✦ ✦ ✦", progress.global_position + Vector2(progress.size.x * 0.5 - 35, 0), true)
+			hud_goal_reached = true
+		elif not hud_initialized:
+			hud_goal_reached = target >= 100
+		hud_initialized = true
+		progress_target = target
 	if is_instance_valid(timer_label):
-		timer_label.text = "Day %d ♡" % (GameManager.days + 1) if GameManager.phase in ["transition", "ready"] else "%.1f seconds" % GameManager.remaining
+		timer_label.text = "Day %d" % (GameManager.days + 1) if GameManager.phase in ["transition", "ready"] else "%.1f seconds" % GameManager.remaining
 	if is_instance_valid(effects_label):
 		effects_label.text = "Combo %d  ·  %d boosted taps" % [GameManager.combo, GameManager.burst_clicks]
 	if GameManager.save_error and is_instance_valid(toast):
@@ -665,7 +775,7 @@ func show_earning(amount: float) -> void:
 		at += Vector2(ui_rng.randf_range(-35, 35), ui_rng.randf_range(-12, 12))
 	feedback(text, at, false)
 	if not FlightStyle.reduced_motion and GameManager.shift_clicks % 6 == 0:
-		feedback("✦" if GameManager.combo >= 4 else "♡", at + Vector2(90, 35), true)
+		feedback("✦", at + Vector2(90, 35), true)
 	if not FlightStyle.reduced_motion and GameManager.combo >= 4 and is_instance_valid(heart_image):
 		heart_image.modulate = Color("ffd1e1")
 		heart_image.create_tween().tween_property(heart_image, "modulate", Color.WHITE, 0.12)

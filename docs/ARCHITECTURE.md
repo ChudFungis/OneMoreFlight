@@ -74,3 +74,5 @@ Event eligibility is completed chapter days modulo event_interval == 0; both bal
 ## v0.4 presentation
 
 Only FlightStyle, FlightScreen, FlightArt and FlightItemDetails change at runtime. Locally bundled Baloo 2 variations and the inherited theme cover all screen entry points; no scene or autoload changes. Pressed button styles move content padding and collapse hard shadow depth without moving the touch rectangle. Release tweens affect color only. Small utility buttons share pixel icons and transparent resting surfaces. Existing item rows and modal processing suspension remain. No manager, gameplay resource, story or save schema changed.
+
+The gameplay savings HUD is presentation-only: FlightScreen reads savings and the discounted goal, renders separate values, and interpolates only the ProgressBar's visual value. Its goal-crossing flag and tweens are local/transient, reset on rebuild and excluded from saves. No animation callback changes money, time, rewards or progression.

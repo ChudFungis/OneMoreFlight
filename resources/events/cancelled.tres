@@ -4,7 +4,7 @@
 script = ExtResource("1")
 id = "cancelled"
 title = "Jake's Betrayal"
-description = "Dani calls Jake over. He looks at her, then runs straight to her sister.\nLaugh it off: +8 base-tap equivalents; Bribe Jake with attention: +15 double-earnings tap charges."
+description = "Dany calls Jake over. He looks at her, then runs straight to her sister.\nLaugh it off: +8 base-tap equivalents; Bribe Jake with attention: +15 double-earnings tap charges."
 choice = "Laugh it off"
 effect = "gift"
 amount = 8
