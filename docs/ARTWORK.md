@@ -31,3 +31,5 @@ Settings includes Reduced motion. It is saved separately in `user://presentation
 ### v0.4 UI treatment
 
 The existing heart and all content illustrations are unchanged. UI pixel assets now also include `pause.svg`, `home.svg`, `toggle_on.svg`, `toggle_off.svg` and `knob.svg`. These use the same burgundy/rose grid treatment as existing utility icons. All FlightArt images use nearest texture filtering; fonts stay smoothly antialiased. Existing explicit texture > PNG > WebP > SVG > fallback resolution remains intact.
+
+The travel suitcase frame is drawn by `scripts/ui/flight_suitcase.gd` from shared palette/StyleBox tokens (handle, hinges, lid seam and tag). Item art remains unmodified and uses the same explicit texture/PNG/WebP/SVG resolution. Slight artwork tilts are presentation-only; icon touch targets remain axis-aligned and fixed. The empty case reuses `ui/airplane`.

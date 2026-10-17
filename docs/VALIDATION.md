@@ -76,3 +76,13 @@ Godot 4.7.2 editor import and Compatibility native launch succeed. Single-thread
 ## Split savings HUD refinement
 
 Headless and native foundation runs pass 10,861 checks. Added HUD checks cover real tap earnings, existing goal discounts, 100% visual cap, goal crossing without consuming time/ending work, rendering without campaign mutation, reduced-motion fill, and large-currency layout at 320/390 logical widths. Portrait captures of ordinary savings, goal crossing and $1,234,567,890,123 were inspected; the final goal effect is a brief center-aligned sparkle burst without input interception. Native targeted captures use separate temporary saves. Import and runtime logs have no script/layout errors; only intentional corrupt-file regression warnings remain. Physical browser/device behavior remains a manual check. No economy/manager changes were made.
+
+## Travel suitcase collection
+
+Headless and native foundation runs pass 10,881 checks. New coverage includes intentional empty state, ability acquisition and entrance eligibility, keepsake-only and mixed collections, multi-level inspection, persisted collection restoration, all-catalog deduplication, bounded scrolling and touch-target bounds. Existing popup tests still verify exact Resource effects, level caps, dismissal, clock suspension and unchanged campaign snapshots. The full three-chapter simulations, event outcomes, milestone completion, results and saves remain covered.
+
+Portrait screenshots cover empty, abilities-only, keepsakes-only, mixed and all-catalog collections; internal scrolling reaches the lower compartment. Caption/lid spacing and small-collection overflow were refined after native inspection. The suitcase uses 56-pixel icon touch targets and a viewport capped at 128 logical pixels, with normal outer scrolling on short screens. No continuous idle loop or physics was added.
+
+The standard single-thread Web export succeeds at `/tmp/one-more-flight-suitcase-web/index.html`. No gameplay managers or content Resources changed in the suitcase commit. Physical mobile/browser interaction and performance remain unverified; browser/device safe areas and scroll gestures remain manual checks. Existing story/illustration quality is unchanged. Earlier uncommitted copy/palette/HUD refinements were preserved separately in checkpoint a121bb2.
+
+One native rerun intermittently failed the existing detail-dismissal/clock tests; the initial native run and subsequent unchanged rerun both passed all 10,881 checks. Headless runs passed consistently. This was not reproduced as a suitcase rendering/logic failure; native window focus and real mobile gesture behavior remain manual verification points.

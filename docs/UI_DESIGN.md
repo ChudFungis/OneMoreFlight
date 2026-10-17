@@ -64,3 +64,13 @@ Gameplay uses equal-width SAVED and FLIGHT GOAL columns, aligned to opposite edg
 The number briefly changes tint on real savings increases, including passive income; the bounded 0.18-second tween is reused during rapid earnings. Progress eases toward a clamped 0–100% target over 0.16 seconds, retargeting from its current fill. Reduced motion sets the fill immediately. A single short, input-ignoring sparkle burst marks the first visible goal crossing; it never pauses work or calls a progression action. Rebuilding initializes from current savings without replaying an already-achieved goal. Existing workday settlement still owns chapter completion.
 
 The route row above savings keeps Monterrey on the left and the chapter destination flush right, with a small nearest-filtered pixel airplane between them. Both labels wrap within equal flexible columns on narrow screens; destination strings and gameplay data are unchanged. The icon follows the existing `assets/art/ui/airplane` fallback mapping.
+
+## Travel suitcase collection
+
+FlightSuitcase replaces the gameplay Abilities/Keepsakes text lists. A compact drawn open case has a handle, lid seam, hinges, lining and luggage tag, using FlightStyle colors/frames. The only heading is the small PACKED MEMORIES caption. Empty cases show a muted airplane, without item names or “None yet.” Abilities occupy the first wrapped compartment; keepsakes occupy the second, separated by a fine seam only when both are present.
+
+Each icon uses the existing stable-ID/explicit-texture FlightArt mapping. Fixed 56x56 buttons wrap with 6-pixel gaps; artwork is inset, tilted by a deterministic ID hash (-5 to +5 degrees) and lightly offset. Button hit areas never rotate or overlap. Tooltips and accessibility names retain item names, but no names/effects appear inline. Keyboard focus remains native. Tap signals route to the unchanged exact-effect FlightItemDetails modal.
+
+The internal viewport grows from 56 to 128 logical pixels, then scrolls vertically; outer gameplay scrolling still handles short screens. Every owned ID appears once and remains reachable. Suitcase geometry does not depend on texture dimensions, and no physics/idle animation loop is used.
+
+FlightScreen retains only a local last-rendered collection/level map. Newly acquired items or level increases pop their artwork from 65% to full scale over 0.24 seconds while fading in; reduced motion skips it. First rendering/restoration does not replay acquisition animations. The animation never delays workday startup or modifies items. Local history is not saved; collection contents still come entirely from GameManager.

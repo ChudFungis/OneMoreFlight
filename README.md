@@ -42,4 +42,6 @@ Active saves use `user://save_data.json`, normally `~/Library/Application Suppor
 
 Read [architecture](docs/ARCHITECTURE.md), [content and balance](docs/GAME_DESIGN.md), [art replacement](docs/ARTWORK.md), [Web export](docs/WEB_EXPORT.md), and [validation](docs/VALIDATION.md).
 
+The gameplay collection lives in an icon-only travel suitcase; tap a packed item to inspect its level and exact effect. Larger collections scroll within the compact case.
+
 The v0.4 Cozy Pixel Arcade presentation bundles Baloo 2 locally (license in assets/fonts), shared tactile controls and crisp pixel icons. Colors, frames, button depth and typography roles are centralized in `scripts/ui/flight_style.gd`; see [UI design](docs/UI_DESIGN.md) for customization.

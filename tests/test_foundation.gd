@@ -687,17 +687,38 @@ func collect_labels(node: Node) -> String:
 
 func check_collection_ui() -> void:
 	GameManager.new_game()
+	var empty_screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	check(empty_screen.item_rows.is_empty() and not collect_labels(empty_screen.item_lists).contains("None yet"), "Empty suitcase leaked a list row")
+	await capture_view("suitcase_empty", 390)
+	GameManager.start_shift()
+	GameManager.advance_time(100)
+	var earned_id: String = GameManager.offers[0]
+	GameManager.buy_upgrade(earned_id)
+	check(empty_screen.item_rows.size() == 1 and empty_screen.item_rows.has("upgrades/" + earned_id), "Earned ability did not enter suitcase")
+	check((empty_screen.item_lists as FlightSuitcase).fresh_items.has("upgrades/" + earned_id), "New collectible did not receive entrance feedback")
+	await capture_view("suitcase_ability", 390)
+	GameManager.upgrades = {}
+	GameManager.relics = ["passport"]
+	GameManager.set_phase("ready")
+	check(empty_screen.item_rows.size() == 1 and empty_screen.item_rows.has("relics/passport"), "Keepsake-only suitcase incorrect")
+	await capture_view("suitcase_keepsake", 390)
+	GameManager.new_game()
 	GameManager.upgrades = {"flights": 1, "tips": 2, "love": 3}
 	GameManager.relics = ["bracelet", "passport"]
 	GameManager.set_phase("ready")
 	var screen: FlightScreen = SceneManager.screen_host.get_child(0)
 	check(screen.item_lists.visible and screen.item_rows.size() == 5, "Collected items are not always visible")
 	var inline_text := collect_labels(screen.item_lists)
-	check(inline_text.contains("Abilities") and inline_text.contains("Keepsakes"), "Collection headings missing")
+	check(not inline_text.contains("Abilities") and not inline_text.contains("Keepsakes") and not inline_text.contains("Nicky Mode"), "Text inventory leaked into suitcase")
 	check(not inline_text.contains("Bonuses:") and not inline_text.contains("per level"), "Detailed effects leaked into inline list")
 	await capture_view("collection", 390)
 	get_tree().root.size = Vector2i(360, 844)
 	await capture_view("collection", 360)
+	var saved_keys: Array = screen.item_rows.keys()
+	GameManager.persist()
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression), "Suitcase fixture did not restore")
+	check(screen.item_rows.size() == 5 and screen.item_rows.keys() == saved_keys, "Save/load lost or duplicated collection icons")
 	var before := GameManager.snapshot()
 	screen.item_rows["upgrades/love"].pressed.emit()
 	var modal: FlightItemDetails = SceneManager.overlay_host.get_child(0)
@@ -742,6 +763,13 @@ func check_collection_ui() -> void:
 		GameManager.relics.append(definition.id)
 	GameManager.set_phase("ready")
 	await capture_view("collection_full", 360)
+	check(screen.item_rows.size() == FlightCatalog.UPGRADES.size() + FlightCatalog.RELICS.size(), "Suitcase duplicated or omitted catalog items")
+	var suitcase := screen.item_lists as FlightSuitcase
+	check(suitcase.scroll.size.y <= 128 and suitcase.contents.size.y > suitcase.scroll.size.y, "Large suitcase did not use compact scroll overflow")
+	suitcase.scroll.scroll_vertical = int(suitcase.scroll.get_v_scroll_bar().max_value)
+	await get_tree().process_frame
+	await capture_modal_if_suitcase(screen)
+
 	for row: Button in screen.item_rows.values():
 		check(row.size.y >= 52 and row.get_global_rect().end.x <= screen.size.x, "Collection row clips or has a small touch target")
 	for definition: FlightDefinition in FlightCatalog.UPGRADES:
@@ -921,3 +949,9 @@ func check_savings_hud() -> void:
 	FlightStyle.reduced_motion = reduced
 	GameManager.restore(previous)
 	get_tree().root.size = Vector2i(390, 844)
+
+func capture_modal_if_suitcase(screen: FlightScreen) -> void:
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("/tmp/omf_suitcase_scrolled.png")
+	check(screen.item_lists.visible, "Scrolling hid the suitcase")

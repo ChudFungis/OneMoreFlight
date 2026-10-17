@@ -14,6 +14,8 @@ var hud_initialized: bool = false
 var hud_goal_reached: bool = false
 var money_label: Label
 var timer_label: Label
+var collection_seen: Dictionary = {}
+var collection_initialized: bool = false
 var item_lists: VBoxContainer
 var item_rows: Dictionary = {}
 var progress: ProgressBar
@@ -392,60 +394,23 @@ func restart_adventure() -> void:
 	GameManager.new_game()
 
 func build_item_lists() -> void:
-	item_lists = VBoxContainer.new()
-	item_lists.add_theme_constant_override("separation", 6)
-	body.add_child(item_lists)
-	var previous := body
-	body = item_lists
-	for folder: String in ["upgrades", "relics"]:
-		label_text("Abilities" if folder == "upgrades" else "Keepsakes", 16, FlightStyle.BURGUNDY)
-		var flow := HFlowContainer.new()
-		flow.add_theme_constant_override("h_separation", 8)
-		flow.add_theme_constant_override("v_separation", 4)
-		body.add_child(flow)
-		var ids: Array = GameManager.upgrades.keys() if folder == "upgrades" else GameManager.relics
-		var catalog: Array = FlightCatalog.UPGRADES if folder == "upgrades" else FlightCatalog.RELICS
-		for id: String in ids:
-			item_row(flow, FlightCatalog.find_item(catalog, id), folder)
-		if ids.is_empty():
-			label_text("None yet", 14, FlightStyle.MUTED)
-	body = previous
-
-func item_row(flow: HFlowContainer, item: FlightDefinition, folder: String) -> void:
-	var row := Button.new()
-	row.tooltip_text = item.title
-	row.custom_minimum_size = Vector2(150, 52)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = FlightStyle.BLUSH
-	pressed.set_corner_radius_all(8)
-	row.add_theme_stylebox_override("pressed", pressed)
-	row.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
-	flow.add_child(row)
-	item_rows[folder + "/" + item.id] = row
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side: String in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 6)
-	row.add_child(margin)
-	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 8)
-	margin.add_child(line)
-	var icon := FlightArt.image(folder, item.id, item.icon)
-	icon.custom_minimum_size = Vector2(24, 24)
-	line.add_child(icon)
-	var title := Label.new()
-	title.text = item.title
-	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 15)
-	title.add_theme_color_override("font_color", FlightStyle.BURGUNDY)
-	line.add_child(title)
-	line.minimum_size_changed.connect(func() -> void:
-		row.custom_minimum_size.y = maxf(52, line.get_combined_minimum_size().y + 12))
-	ignore_pointer(margin)
-	row.pressed.connect(func() -> void: show_item_details(item, folder == "relics"))
+	var suitcase := FlightSuitcase.new()
+	var current: Dictionary = {}
+	for id: String in GameManager.upgrades:
+		current["upgrades/" + id] = GameManager.count(id)
+	for id: String in GameManager.relics:
+		current["relics/" + id] = 1
+	if collection_initialized:
+		for key: String in current:
+			if int(current[key]) > int(collection_seen.get(key, 0)):
+				suitcase.fresh_items[key] = true
+	collection_seen = current
+	collection_initialized = true
+	item_lists = suitcase
+	body.add_child(suitcase)
+	suitcase.populate(GameManager.upgrades, GameManager.relics)
+	item_rows = suitcase.item_buttons
+	suitcase.item_inspected.connect(show_item_details)
 
 func show_item_details(item: FlightDefinition, relic: bool) -> void:
 	if SceneManager.overlay_host.get_child_count() > 0:
