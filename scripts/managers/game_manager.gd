@@ -84,7 +84,7 @@ func new_game() -> void:
 	last_event_id = ""
 	offers = []
 	event_id = ""
-	phase = "ready"
+	phase = "transition"
 	remaining = 0
 	shift_clicks = 0
 	combo = 0
@@ -96,7 +96,7 @@ func new_game() -> void:
 	SceneManager.show_screen("game")
 
 func has_save() -> bool:
-	return SaveManager.progression.get("game_version") == 1 or SaveManager.progression.get("game_version") == 2
+	return SaveManager.progression.get("game_version") == 1 or SaveManager.progression.get("game_version") == 2 or SaveManager.progression.get("game_version") == 3
 
 func continue_game() -> void:
 	if not restore(SaveManager.progression):
@@ -143,7 +143,7 @@ func upgrade_offers() -> Array:
 	return result
 
 func start_shift() -> void:
-	if phase != "ready" or state != State.PLAYING:
+	if phase not in ["ready", "transition"] or state != State.PLAYING:
 		return
 	remaining = balance.shift_seconds + fixed_extension()
 	shift_clicks = 0
@@ -227,7 +227,7 @@ func complete_reward() -> void:
 	if _complete_chapter():
 		return
 	offers = []
-	set_phase("event" if pending_event else "ready")
+	set_phase("event" if pending_event else "transition")
 
 func random_ids(items: Array, size_wanted: int, excluded: Array = []) -> Array:
 	var pool: Array = []
@@ -283,11 +283,11 @@ func resolve_event(alternative: bool = false) -> void:
 	event_id = ""
 	pending_event = false
 	if not _complete_chapter():
-		set_phase("ready")
+		set_phase("transition")
 
 func _complete_chapter() -> bool:
 	# Only settled workdays can reach a milestone; never interrupt active tapping.
-	if phase not in ["work", "ready", "upgrades", "event"] or days <= 0 or money < goal() or chapter in completed_chapters:
+	if phase not in ["work", "ready", "transition", "upgrades", "event"] or days <= 0 or money < goal() or chapter in completed_chapters:
 		return false
 	if phase == "work" and remaining > 0:
 		return false
@@ -341,10 +341,10 @@ func choose_relic(id: String) -> void:
 	offers = []
 	if has_relic("kiss"):
 		apply_upgrade(FlightCatalog.find_item(FlightCatalog.UPGRADES, "appointment"))
-	set_phase("ready")
+	set_phase("transition")
 
 func snapshot() -> Dictionary:
-	return {"game_version": 2, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
+	return {"game_version": 3, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
 		"completed_chapters": completed_chapters.duplicate(), "complete": complete, "upgrades": upgrades.duplicate(),
 		"relics": relics.duplicate(), "phase": phase, "offers": offers.duplicate(), "event_id": event_id,
 		"goal_multiplier": goal_multiplier, "remaining": remaining, "shift_clicks": shift_clicks,
@@ -355,7 +355,7 @@ func persist() -> void:
 	save_error = SaveManager.save_data() != OK
 
 func restore(data: Dictionary) -> bool:
-	if data.get("game_version") != 1 and data.get("game_version") != 2:
+	if data.get("game_version") != 1 and data.get("game_version") != 2 and data.get("game_version") != 3:
 		return false
 	run_attempt = int(safe_number(data.get("run_attempt"), 0, 2000000000))
 	run_new_best = data.get("run_new_best", false) == true
@@ -384,7 +384,7 @@ func restore(data: Dictionary) -> bool:
 		if id is String and FlightCatalog.find_item(FlightCatalog.RELICS, id) != null and id not in relics:
 			relics.append(id)
 	phase = str(data.get("phase", "ready"))
-	if phase not in ["ready", "work", "upgrades", "event", "story", "relic", "ending"]:
+	if phase not in ["ready", "transition", "work", "upgrades", "event", "story", "relic", "ending"]:
 		phase = "ready"
 	offers = []
 	var catalog: Array = FlightCatalog.RELICS if phase == "relic" else FlightCatalog.UPGRADES
@@ -409,6 +409,13 @@ func restore(data: Dictionary) -> bool:
 		pending_event = phase == "event"
 		if pending_event:
 			phase = "upgrades"
+	# Pending decisions migrate to the current chapter-local three-day schedule.
+	if phase in ["upgrades", "event"]:
+		pending_event = days > 0 and days % maxi(1, balance.event_interval) == 0
+		if not pending_event:
+			event_id = ""
+			if phase == "event":
+				phase = "transition"
 	if pending_event and FlightCatalog.find_item(FlightCatalog.EVENTS, event_id) == null:
 		event_id = random_ids(FlightCatalog.EVENTS, 1, [last_event_id])[0]
 	if phase == "upgrades":
@@ -417,12 +424,14 @@ func restore(data: Dictionary) -> bool:
 		if offers.is_empty():
 			offers = upgrade_offers()
 		if offers.is_empty():
-			phase = "event" if pending_event else "ready"
+			phase = "event" if pending_event else "transition"
 	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + minf(balance.playlist_extension_cap, balance.max_shift_extension - fixed_extension()))
 	save_clock = 0
 	# Older saves may be waiting for a manual trip after a settled workday.
-	if phase in ["ready", "upgrades", "event"]:
+	if phase in ["ready", "upgrades", "event", "transition"]:
 		_complete_chapter()
+	if phase == "ready":
+		phase = "transition"
 	return true
 
 func safe_number(value: Variant, fallback: float, maximum: float) -> float:

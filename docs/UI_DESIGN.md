@@ -39,6 +39,10 @@ Two new original pixel icons are `assets/art/ui/trophy.svg` and `gear.svg`. The 
 
 ## Collection UI refinement
 
-The large “Your abilities & keepsakes” button is removed. Separate Abilities and Keepsakes sections use existing art at 24 logical pixels, burgundy name labels and transparent row hit areas. The flow layout wraps vertically as items accumulate; long names wrap within the row. Empty collections show “None yet.” Only the workday CTA retains a large filled button on the ready screen. Pause/Save is a compact, transparent 52-pixel target.
+The large “Your abilities & keepsakes” button is removed. Separate Abilities and Keepsakes sections use existing art at 24 logical pixels, burgundy name labels and transparent row hit areas. The flow layout wraps vertically as items accumulate; long names wrap within the row. Empty collections show “None yet.” The former overview/start CTA is removed in v0.3.3; the existing heart starts automatically after decisions. Pause/Save is a compact, transparent 52-pixel target.
 
 Tapping a collected item opens FlightItemDetails: its name, owned level/max level (or permanent/refill status), original flavor line and exact Resource effect/caps are shown in a compact scrollable panel. Effects are not duplicated inline. Close, outside tap and Escape dismiss it. The workday clock is held while reading without awarding income, changing campaign phase or saving. Existing artwork, theme, gameplay formulas, content and reward probabilities remain unchanged.
+
+## v0.3.3 flow refinement
+
+The existing tapping layout is displayed directly between workdays and after relic selection; chapter overview artwork and its manual start action no longer interrupt play. Artwork files and collection components are retained. A short Day X indicator replaces the timer during the 0.4-second entrance, with the same heart temporarily disabled. Once fully visible and released input is observed, the screen enables input and starts the unchanged 10-second workday. Reward/event/relic/story/home/results designs and illustrations are unchanged. Reduced motion keeps its existing behavior; the short input-safety delay remains.

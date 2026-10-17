@@ -5,7 +5,7 @@ extends Resource
 @export var chapter_income: PackedFloat32Array = [1.0, 2.0, 3.5]
 @export var goals: PackedFloat32Array = [2100.0, 5300.0, 11000.0]
 @export var price_scale: PackedFloat32Array = [1.0, 2.0, 3.5]
-@export var event_interval: int = 2
+@export var event_interval: int = 3
 @export var combo_window: float = 0.6
 @export var max_shift_extension: float = 6.0
 @export var playlist_extension_cap: float = 2.0

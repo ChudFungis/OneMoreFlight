@@ -4,6 +4,7 @@ var failures: int = 0
 var checks: int = 0
 var saved_settings: Dictionary
 var main: Node
+var resume_ambient_pause: bool = false
 
 func check(ok: bool, message: String) -> void:
 	checks += 1
@@ -14,6 +15,13 @@ func check(ok: bool, message: String) -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	call_deferred("run_checks")
+
+func _process(_delta: float) -> void:
+	# Native visual tests may lose OS focus while the owner uses their computer.
+	# Explicit pause tests leave this off; accelerated drivers emulate Resume.
+	if resume_ambient_pause and GameManager.state == GameManager.State.PAUSED:
+		print("Automated driver resumed an ambient focus pause")
+		SceneManager.resume_run()
 
 func item(id: String) -> FlightDefinition:
 	return FlightCatalog.find_item(FlightCatalog.UPGRADES, id)
@@ -40,7 +48,7 @@ func run_checks() -> void:
 	await check_home_results()
 	await check_milestones()
 	GameManager.new_game()
-	check(GameManager.phase == "ready" and GameManager.money == 0, "New game did not reset")
+	check(GameManager.phase == "transition" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
 	check(is_equal_approx(GameManager.remaining, 10), "Shift length incorrect")
 	check(is_equal_approx(GameManager.tap(), 5), "Base income incorrect")
@@ -140,7 +148,7 @@ func run_checks() -> void:
 			GameManager.event_id = event.id
 			GameManager.money = 1000
 			GameManager.resolve_event(alternate)
-			check(GameManager.phase == "ready" and GameManager.money >= 1000, "Event failed: " + event.id)
+			check(GameManager.phase == "transition" and GameManager.money >= 1000, "Event failed: " + event.id)
 	await check_redesign()
 	# Save/load preserves the exact decision and offers, not just a chapter index.
 	GameManager.phase = "relic"
@@ -161,12 +169,12 @@ func run_checks() -> void:
 	check(GameManager.chapter == 1 and GameManager.money == 0 and GameManager.relics.has("kiss"), "Relic transition failed")
 	check(GameManager.upgrades.size() == 1 and GameManager.count("appointment") == 1, "Ordinary upgrade reset / free-upgrade relic failed")
 	check(GameManager.days == 0 and GameManager.last_event_id == "", "Chapter event schedule did not reset")
-	for day: int in [1, 2]:
+	for day: int in [1, 2, 3]:
 		GameManager.start_shift()
 		GameManager.advance_time(100)
 		GameManager.buy_upgrade(GameManager.offers[0])
-		check(GameManager.phase == ("event" if day == 2 else "ready"), "New chapter event cadence failed")
-		if day == 2:
+		check(GameManager.phase == ("event" if day == 3 else "transition"), "New chapter event cadence failed")
+		if day == 3:
 			GameManager.resolve_event()
 	await check_presentation()
 	await capture_decisions()
@@ -202,6 +210,7 @@ func run_checks() -> void:
 	get_tree().quit(failures)
 
 func simulate_game(rate: int) -> void:
+	resume_ambient_pause = true
 	GameManager.new_game()
 	GameManager.rng.seed = 12345
 	var chapter_days: Array = []
@@ -210,7 +219,7 @@ func simulate_game(rate: int) -> void:
 	while GameManager.phase != "ending" and guard < 150:
 		guard += 1
 		match GameManager.phase:
-			"ready": GameManager.start_shift()
+			"ready", "transition": GameManager.start_shift()
 			"work":
 				while GameManager.phase == "work":
 					GameManager.tap()
@@ -234,6 +243,7 @@ func simulate_game(rate: int) -> void:
 	check(GameManager.chapter_days == chapter_days, "Completed chapter counts differ from simulation")
 	check(SaveManager.results.recent[0].total_days == GameManager.total_days, "Completed campaign result missing")
 	print("Balance simulation %d taps/sec: days %s, working %.1fs" % [rate, chapter_days, work_seconds])
+	resume_ambient_pause = false
 
 func check_redesign() -> void:
 	GameManager.new_game()
@@ -266,7 +276,7 @@ func check_redesign() -> void:
 	GameManager.burst_clicks = 60
 	check(GameManager.upgrade_offers().is_empty(), "Exhausted rewards still offered")
 	GameManager.phase = "work"
-	GameManager.days = 1
+	GameManager.days = 2
 	GameManager.remaining = 0
 	GameManager.finish_shift()
 	check(GameManager.phase == "event", "Exhausted rewards blocked required event")
@@ -312,8 +322,8 @@ func check_redesign() -> void:
 		check(GameManager.restore(saved) and GameManager.snapshot() == saved, "Pending reward changed on load")
 		var previous := GameManager.last_event_id
 		GameManager.buy_upgrade(GameManager.offers[0])
-		check(GameManager.phase == ("event" if day % 2 == 0 else "ready"), "Wrong event day")
-		if day % 2 == 0:
+		check(GameManager.phase == ("event" if day % 3 == 0 else "transition"), "Wrong event day")
+		if day % 3 == 0:
 			check(GameManager.event_id != previous, "Consecutive event repeated")
 			GameManager.persist()
 			SaveManager.load_data()
@@ -321,7 +331,7 @@ func check_redesign() -> void:
 			GameManager.resolve_event()
 			var paid := GameManager.money
 			GameManager.resolve_event()
-			check(GameManager.money == paid and GameManager.phase == "ready", "Event paid twice")
+			check(GameManager.money == paid and GameManager.phase == "transition", "Event paid twice")
 	# All positive outcomes, with exact amplifier and charge rounding.
 	for event: FlightDefinition in FlightCatalog.EVENTS:
 		for alternate: bool in [false, true]:
@@ -352,12 +362,13 @@ func check_redesign() -> void:
 	legacy.offers = ["appointment", "facetime", "tips"]
 	check(GameManager.restore(legacy) and GameManager.offers == ["facetime", "tips"], "Legacy shop migration failed")
 	legacy.phase = "event"
+	legacy.days = 3
 	legacy.event_id = "repair"
 	GameManager.restore(legacy)
 	check(GameManager.phase == "upgrades" and GameManager.event_id == "repair", "Legacy event did not move behind reward")
 	GameManager.buy_upgrade(GameManager.offers[0])
 	GameManager.resolve_event()
-	check(GameManager.phase == "ready", "Legacy event did not resolve once")
+	check(GameManager.phase == "transition", "Legacy event did not resolve once")
 	await get_tree().process_frame
 
 func capture_decisions() -> void:
@@ -376,6 +387,8 @@ func capture_decisions() -> void:
 		var screen: FlightScreen = SceneManager.screen_host.get_child(0)
 		screen.select_choice("appointment")
 		await capture_view("selected", width)
+		GameManager.days = 3 # Presentation fixture: an eligible completed event day.
+		GameManager.total_days = 3
 		GameManager.pending_event = true
 		GameManager.event_id = "repair"
 		GameManager.buy_upgrade("appointment")
@@ -515,7 +528,7 @@ func check_home_results() -> void:
 	SceneManager.show_screen("main_menu")
 	home = SceneManager.screen_host.get_child(0)
 	home.tap_button.pressed.emit()
-	check(GameManager.phase == "ready" and GameManager.days == 0 and GameManager.money == 0 and GameManager.upgrades.is_empty() and GameManager.relics.is_empty(), "Home restored unfinished progression")
+	check(GameManager.phase == "transition" and GameManager.days == 0 and GameManager.money == 0 and GameManager.upgrades.is_empty() and GameManager.relics.is_empty(), "Home restored unfinished progression")
 	check(GameManager.burst_clicks == 0 and GameManager.offers.is_empty() and GameManager.event_id.is_empty() and GameManager.chapter_days.is_empty(), "Fresh run retained temporary state")
 	finish_test_adventure([7, 7, 7])
 	check(results.recent.size() == 1 and results.best.total_days == 21 and GameManager.run_new_best, "First completion not recorded as best")
@@ -589,8 +602,8 @@ func check_milestones() -> void:
 		GameManager.apply_upgrade(item("jar"))
 		if chapter_index == 1:
 			check(GameManager.has_relic("passport"), "Travel relic did not persist")
-		GameManager.days = 1 # Complete on an event day: neither event nor reward may appear.
-		GameManager.total_days = chapter_index * 2 + 1
+		GameManager.days = 2 # Complete on an event day: neither event nor reward may appear.
+		GameManager.total_days = chapter_index * 3 + 2
 		var target := GameManager.goal()
 		GameManager.money = target / 1.02 - 1
 		GameManager.start_shift()
@@ -600,11 +613,11 @@ func check_milestones() -> void:
 		check(GameManager.restore(working) and GameManager.phase == "work", "Load completed a still-active workday")
 		GameManager.money = target / 1.02 + (100 if chapter_index == 1 else 0)
 		GameManager.finish_shift()
-		check(GameManager.phase == "work" and GameManager.days == 1, "Workday completed before timer expired")
+		check(GameManager.phase == "work" and GameManager.days == 2, "Workday completed before timer expired")
 		GameManager.advance_time(GameManager.remaining - 0.1)
 		check(GameManager.phase == "work", "Milestone interrupted tapping")
 		GameManager.advance_time(0.1)
-		check(GameManager.phase == "story" and GameManager.days == 2, "Settled interest did not trigger milestone")
+		check(GameManager.phase == "story" and GameManager.days == 3, "Settled interest did not trigger milestone")
 		check(GameManager.offers.is_empty() and GameManager.event_id.is_empty() and not GameManager.pending_event, "Winning day showed upgrade/event")
 		check(is_equal_approx(GameManager.money, target + (102 if chapter_index == 1 else 0)), "Milestone deducted savings or interest incorrect")
 		var saved := GameManager.snapshot()
@@ -621,10 +634,10 @@ func check_milestones() -> void:
 			GameManager.choose_relic(GameManager.offers[0])
 			check(GameManager.money == 0 and GameManager.days == 0 and GameManager.goal_multiplier == 1, "Excess savings carried into next chapter")
 			check(GameManager.upgrades.is_empty() or GameManager.upgrades == {"appointment": 1}, "Chapter reset retained ordinary abilities")
-	check(GameManager.phase == "ending" and GameManager.total_days == 6 and GameManager.complete, "Final automatic milestone did not finish")
-	check(SaveManager.results.recent[0].total_days == 6 and SaveManager.results.recent[0].chapter_days == [2, 2, 2], "Final automatic completion recorded wrong score")
-	check(GameManager.run_new_best and SaveManager.results.best.total_days == 6, "Automatic completion did not update personal best")
-	check(SaveManager.results.recent.size() == mini(5, history_size + 1) and best_before.total_days > 6, "Completed ledger count incorrect")
+	check(GameManager.phase == "ending" and GameManager.total_days == 9 and GameManager.complete, "Final automatic milestone did not finish")
+	check(SaveManager.results.recent[0].total_days == 9 and SaveManager.results.recent[0].chapter_days == [3, 3, 3], "Final automatic completion recorded wrong score")
+	check(GameManager.run_new_best and SaveManager.results.best.total_days == 9, "Automatic completion did not update personal best")
+	check(SaveManager.results.recent.size() == mini(5, history_size + 1) and best_before.total_days > 9, "Completed ledger count incorrect")
 	var recent := SaveManager.results.recent.duplicate(true)
 	GameManager.record_completed_run()
 	GameManager.restore(GameManager.snapshot())
@@ -658,6 +671,7 @@ func check_milestones() -> void:
 		legacy.event_id = "call"
 		check(GameManager.restore(legacy) and GameManager.phase == "story" and GameManager.days == 2, "Reached legacy milestone did not resume story")
 	await check_collection_ui()
+	await check_seamless_flow()
 
 func collect_labels(node: Node) -> String:
 	var text: String = node.text + "\n" if node is Label else ""
@@ -739,3 +753,123 @@ func capture_modal(label: String) -> void:
 	if DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("/tmp/omf_%s.png" % label)
+
+func check_seamless_flow() -> void:
+	GameManager.new_game()
+	GameManager.rng.seed = 202633
+	# Deterministic rules use the same start/advance/tap methods; UI arms separately.
+	for day: int in range(1, 10):
+		check(GameManager.phase == "transition", "Decision returned to overview")
+		var idle_money := GameManager.money
+		GameManager.advance_time(5)
+		check(GameManager.money == idle_money and GameManager.tap() == 0, "Transition awarded earnings")
+		GameManager.start_shift()
+		GameManager.start_shift()
+		check(GameManager.days == day - 1, "Transition started/counts workday twice")
+		GameManager.advance_time(GameManager.remaining)
+		check(GameManager.phase == "upgrades" and GameManager.days == day, "Workday did not produce one reward")
+		var id: String = GameManager.offers[0]
+		GameManager.buy_upgrade(id)
+		check(not GameManager.buy_upgrade(id), "Double reward during transition")
+		check(GameManager.phase == ("event" if day % 3 == 0 else "transition"), "Three-day schedule incorrect")
+		if day % 3 == 0:
+			var event := GameManager.event_id
+			GameManager.persist()
+			SaveManager.load_data()
+			check(GameManager.restore(SaveManager.progression) and GameManager.event_id == event, "Event rerolled on reload")
+			GameManager.resolve_event(true)
+			var charges := GameManager.burst_clicks
+			GameManager.resolve_event(true)
+			check(GameManager.phase == "transition" and GameManager.burst_clicks == charges, "Event paid twice")
+		# Keep this scheduling test below goals, independently of reward RNG.
+		GameManager.money = 0
+	# Restoring a pending transition cannot replay decisions or start the timer early.
+	var pending := GameManager.snapshot()
+	GameManager.persist()
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and GameManager.snapshot() == pending, "Transition round trip changed campaign")
+	# Old even-day pending events migrate away; third-day events stay queued.
+	var old := pending.duplicate(true)
+	old.game_version = 2
+	old.phase = "event"
+	old.days = 2
+	old.event_id = "call"
+	check(GameManager.restore(old) and GameManager.phase == "transition" and not GameManager.pending_event, "Old even-day event survived migration")
+	old.days = 3
+	check(GameManager.restore(old) and GameManager.phase == "event" and GameManager.event_id == "call", "Eligible legacy event lost")
+	# Six settled days in each chapter: Day 3 event, Day 6 milestone priority.
+	GameManager.new_game()
+	for chapter_index: int in range(3):
+		for day: int in range(1, 7):
+			GameManager.start_shift()
+			GameManager.money = GameManager.goal() if day == 6 else 0
+			GameManager.advance_time(GameManager.remaining)
+			if day == 6:
+				check(GameManager.phase == "story" and not GameManager.pending_event and GameManager.offers.is_empty(), "Day 6 milestone failed to suppress event/reward")
+			else:
+				var selected: String = GameManager.offers[0]
+				GameManager.buy_upgrade(selected)
+				check(GameManager.phase == ("event" if day == 3 else "transition"), "Chapter-local event schedule did not reset")
+				if day == 3:
+					GameManager.resolve_event(true)
+		GameManager.finish_story()
+		if chapter_index < 2:
+			GameManager.choose_relic(GameManager.offers[0])
+			check(GameManager.phase == "transition" and GameManager.days == 0 and not GameManager.pending_event and GameManager.event_id.is_empty(), "New chapter retained scheduled event/day")
+	check(GameManager.phase == "ending" and GameManager.total_days == 18 and SaveManager.results.recent[0].chapter_days == [6, 6, 6], "Seamless final result has incorrect day counts")
+	# Temporary charges persist, while per-shift feedback/time budgets reset.
+	GameManager.new_game()
+	GameManager.start_shift()
+	GameManager.advance_time(GameManager.remaining)
+	GameManager.offers = ["cabrito"]
+	GameManager.buy_upgrade("cabrito")
+	var kept_charges := GameManager.burst_clicks
+	GameManager.combo = 5
+	GameManager.extension_used = 2
+	GameManager.start_shift()
+	check(GameManager.burst_clicks == kept_charges and GameManager.combo == 0 and GameManager.extension_used == 0 and GameManager.remaining == 10, "Automatic next shift changed temporary-bonus reset rules")
+	# Pause during the handoff retains the full next workday.
+	GameManager.new_game()
+	GameManager.set_process(true)
+	SceneManager.pause_run()
+	await get_tree().create_timer(0.5).timeout
+	check(GameManager.phase == "transition" and GameManager.remaining == 0, "Paused transition consumed workday time")
+	SceneManager.resume_run()
+	resume_ambient_pause = true
+	await get_tree().create_timer(0.5).timeout
+	check(GameManager.phase == "work" and GameManager.remaining > 9.7, "Transition did not resume with a full workday")
+	GameManager.set_process(false)
+	# Actual UI handshake: render first, wait, reject held input, then start exactly once.
+	resume_ambient_pause = true
+	GameManager.new_game()
+	var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	GameManager.set_process(true)
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.position = screen.tap_button.get_global_rect().get_center()
+	down.pressed = true
+	Input.parse_input_event(down)
+	await get_tree().create_timer(0.5).timeout
+	check(GameManager.phase == "transition" and GameManager.remaining == 0 and GameManager.shift_clicks == 0, "Held input leaked through transition")
+	var up := down.duplicate() as InputEventMouseButton
+	up.pressed = false
+	Input.parse_input_event(up)
+	await get_tree().create_timer(0.08).timeout
+	check(GameManager.phase == "work" and GameManager.remaining > 9.8 and GameManager.shift_clicks == 0, "Visible-screen handshake failed or release earned money")
+	check(screen.body.modulate.a == 1 and not screen.tap_button.disabled, "Timer started before screen was visible/input-ready")
+	GameManager.set_process(false)
+	# Check UI-driven upgrade -> transition -> next workday, with no start action.
+	GameManager.advance_time(GameManager.remaining)
+	var chosen: String = GameManager.offers[0]
+	screen.select_choice(chosen)
+	screen.commit_choice()
+	GameManager.set_process(true)
+	await get_tree().create_timer(0.2).timeout
+	check(GameManager.phase == "transition" and GameManager.remaining == 0, "Workday started during fade")
+	screen.rebuild()
+	await get_tree().create_timer(0.25).timeout
+	check(GameManager.phase == "transition", "Stale transition callback armed a rebuilt screen")
+	await get_tree().create_timer(0.25).timeout
+	check(GameManager.phase == "work" and GameManager.days == 1 and GameManager.remaining > 9.7, "Next workday did not begin automatically")
+	GameManager.set_process(false)
+	resume_ambient_pause = false

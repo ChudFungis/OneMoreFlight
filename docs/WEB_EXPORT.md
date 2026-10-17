@@ -33,3 +33,7 @@ The missing-template issue was resolved using the standard template package link
 ```
 
 The output contains HTML, JavaScript, WASM, PCK, icons and audio helper files. No hosting, publishing or deployment occurred. No browser is connected to the available UI tool, so actual browser rendering, reload persistence and iPhone/Android touch behavior could not be checked. Serve the complete output directory over HTTP as above to finish those checks. Completed results must remain on the same origin with browser storage enabled; clearing site data removes local records.
+
+## v0.3.3 flow check
+
+The normal Web release command succeeds for `/tmp/one-more-flight-v033-web/index.html` using the installed matching templates. The preset still disables threads and extensions. The export includes the existing artwork, local-results support and new transition phase. A browser connection was unavailable during validation; confirm automatic day starts, release guards after cards/events, focus pause, day-3/day-6 events, reload during the brief transition and local results on actual mobile browsers before sharing the build. The build was not published.

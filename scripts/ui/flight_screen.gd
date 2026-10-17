@@ -2,6 +2,7 @@ class_name FlightScreen
 extends Control
 ## Shared mobile layout helpers. Rules remain in GameManager.
 const STORY = preload("res://resources/story.tres")
+const WORKDAY_TRANSITION_SECONDS := 0.4
 @export var view: String = "main_menu"
 var body: VBoxContainer
 var money_label: Label
@@ -24,6 +25,7 @@ var feedback_count: int = 0
 var last_phase: String = ""
 var viewport_width: float = 0
 var home_starting: bool = false
+var rebuild_generation: int = 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE if view == "game" else Node.PROCESS_MODE_ALWAYS
@@ -63,6 +65,13 @@ func button(text: String, action: Callable, primary: bool = false) -> Button:
 func rebuild() -> void:
 	if not is_inside_tree():
 		return
+	# The transition already rendered and faded in this exact workday screen.
+	if view == "game" and last_phase in ["transition", "ready"] and GameManager.phase == "work" and is_instance_valid(tap_button):
+		tap_button.disabled = false
+		last_phase = "work"
+		refresh()
+		return
+	rebuild_generation += 1
 	for child: Node in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -118,6 +127,34 @@ func rebuild() -> void:
 		if GameManager.phase == "ending" and last_phase != "ending":
 			celebrate("You made it! ♡", true)
 		last_phase = GameManager.phase
+		if GameManager.phase in ["transition", "ready"]:
+			arm_workday(rebuild_generation)
+
+func arm_workday(generation: int) -> void:
+	# One rendered, input-blocked tapping screen; no countdown or overview.
+	await get_tree().process_frame
+	if not is_inside_tree() or generation != rebuild_generation:
+		return
+	await get_tree().create_timer(WORKDAY_TRANSITION_SECONDS, false).timeout
+	while is_inside_tree() and generation == rebuild_generation and GameManager.phase in ["ready", "transition"]:
+		if can_arm_workday(generation):
+			# Wait one final input frame after release before enabling the heart.
+			await get_tree().process_frame
+			if can_arm_workday(generation):
+				GameManager.start_shift()
+				return
+		await get_tree().process_frame
+
+func can_arm_workday(generation: int) -> bool:
+	if not is_inside_tree() or generation != rebuild_generation:
+		return false
+	if GameManager.phase not in ["ready", "transition"] or GameManager.state != GameManager.State.PLAYING:
+		return false
+	if not GameManager.is_processing() or SceneManager.overlay_host.get_child_count() > 0:
+		return false
+	if body.modulate.a < 1 or not is_instance_valid(tap_button) or tap_button.size.y <= 0:
+		return false
+	return not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not Input.is_action_pressed("ui_accept")
 
 func artwork(id: String, height: float = 190, folder: String = "story", explicit: Texture2D = null) -> void:
 	var panel := PanelContainer.new()
@@ -270,7 +307,7 @@ func close() -> void:
 func build_game() -> void:
 	var shown_day := GameManager.days if GameManager.phase in ["upgrades", "event"] else GameManager.days + 1
 	label_text("ONE MORE FLIGHT   /   CHAPTER %d · DAY %d" % [GameManager.chapter + 1, shown_day], 13, FlightStyle.MUTED)
-	if GameManager.phase in ["work", "ready"]:
+	if GameManager.phase in ["work", "ready", "transition"]:
 		label_text(GameManager.DESTINATIONS[GameManager.chapter], 23)
 		money_label = label_text("", 22, FlightStyle.BURGUNDY)
 		progress = ProgressBar.new()
@@ -278,15 +315,11 @@ func build_game() -> void:
 		progress.show_percentage = false
 		body.add_child(progress)
 	match GameManager.phase:
-		"ready":
-			artwork("main_menu", 180)
-			label_text("A little hustle. A lot of love.", 24)
-			label_text("Work for 10 seconds. Reach the savings goal to travel automatically.", 16)
-			button("Let’s get to work ♡", GameManager.start_shift, true)
-		"work":
+		"ready", "transition", "work":
 			timer_label = label_text("", 30, FlightStyle.BURGUNDY)
 			timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			build_heart()
+			tap_button.disabled = GameManager.phase != "work"
 			var hint := label_text("Tap a little love into the travel fund", 15, FlightStyle.MUTED)
 			hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			effects_label = label_text("", 15, FlightStyle.BURGUNDY)
@@ -316,7 +349,7 @@ func build_game() -> void:
 					rebuild())
 			button("Home ♡", GameManager.main_menu)
 			button("Start another adventure", restart_adventure, true)
-	if GameManager.phase in ["ready", "work"]:
+	if GameManager.phase in ["ready", "transition", "work"]:
 		build_item_lists()
 	if GameManager.phase not in ["story", "ending"]:
 		var pause_control := button("Ⅱ  Pause / Save", SceneManager.pause_run)
@@ -582,7 +615,7 @@ func refresh() -> void:
 	if is_instance_valid(progress):
 		progress.value = minf(100, GameManager.money / GameManager.goal() * 100)
 	if is_instance_valid(timer_label):
-		timer_label.text = "%.1f seconds" % GameManager.remaining
+		timer_label.text = "Day %d ♡" % (GameManager.days + 1) if GameManager.phase in ["transition", "ready"] else "%.1f seconds" % GameManager.remaining
 	if is_instance_valid(effects_label):
 		effects_label.text = "Combo %d  ·  %d boosted taps" % [GameManager.combo, GameManager.burst_clicks]
 	if GameManager.save_error and is_instance_valid(toast):

@@ -1,16 +1,16 @@
-# One More Flight — v0.2 content and tuning
+# One More Flight — content and tuning (v0.3.3 flow)
 
 The three chapters, story, artwork paths, ordinary-upgrade resets and permanent relics remain. The source is `One_More_Flight_Final_Codex_Spec.xlsx` (all five sheets reviewed). Economy & Mechanics records v0.1; it does not override the proposed content or confirmed rules. All existing content IDs are retained.
 
 ## Rules and provisional tuning
 
-Confirmed rules: 10-second base workdays; one free reward per below-goal completed workday; three unique viable choices when available; 65% new / 35% owned level-up selection independently for each card, conditional on remaining candidates; exactly one event on below-goal chapter days 2, 4, 6, etc.; no event penalties or ordinary upgrade costs. Savings now act as milestones, without a manual ticket purchase. Events avoid consecutive repeats within a chapter.
+Confirmed rules: 10-second base workdays; one free reward per below-goal completed workday; three unique viable choices when available; 65% new / 35% owned level-up selection independently for each card, conditional on remaining candidates; exactly one event on below-goal chapter days 3, 6, 9, etc.; no event penalties or ordinary upgrade costs. Savings now act as milestones, without a manual ticket purchase. Events avoid consecutive repeats within a chapter.
 
-Order: settle work earnings and interest → check the discounted savings milestone. If reached, enter the story immediately and skip reward/event choices. Otherwise choose one reward → resolve the even-day event → ready for work. If a goal discount or event gift reaches the milestone after work, enter the story then. The event is selected at shift completion and saved alongside offers. Neither choice is rerolled by loading. Reward cards show NEW or the resulting LEVEL. Workday input, floating earnings, combo feedback, pause and autosave remain.
+Order: settle work earnings and interest → check the discounted savings milestone. If reached, enter the story immediately and skip reward/event choices. Otherwise choose one reward → resolve the third-day event → automatic transition to the next workday. If a goal discount or event gift reaches the milestone after work, enter the story then. The event is selected at shift completion and saved alongside offers. Neither choice is rerolled by loading. Reward cards show NEW or the resulting LEVEL. Workday input, floating earnings, combo feedback, pause and autosave remain.
 
 The owner approved these gap resolutions: a shared +6-second extension cap; Cabrito can recur below 60 charges without a level cap; music has four levels; offer fewer than three cards if necessary; advance past the reward only when no candidates exist. Time abilities that cannot increase duration because fixed extensions already fill the cap are excluded.
 
-Proposed names and numeric balance values are implemented for testing, not promoted to final balance decisions. In particular, Volaris Red-Eye and Girls’ Night Boost remain provisional names. The confirmed event cadence overrides the contradictory 45% recommendation. Final positive event choices override stale gamble/loss notes. No random-outcome or loss handler is needed.
+Proposed names and numeric balance values are implemented for testing, not promoted to final balance decisions. In particular, Volaris Red-Eye and Girls’ Night Boost remain provisional names. The v0.3.3 owner direction supersedes the workbook’s earlier two-day cadence; events now occur every third completed chapter day, with no probability roll. Final positive event choices override stale gamble/loss notes. No random-outcome or loss handler is needed.
 
 Tune amounts and levels in `resources/upgrades/*.tres`, events and relics in their matching folders, and shared timing/weight values in `resources/balance.tres`. Story prose stays in `resources/story.tres`.
 
@@ -54,10 +54,12 @@ Seed 12345, selecting the first available preferred ability in order facetime/ti
 
 | Taps/sec | Denver / Italy / Future days | Active work |
 | --- | --- | --- |
-| 2 | 7 / 7 / 7 | 212 s |
-| 3 | 5 / 6 / 6 | 170 s |
-| 4 | 5 / 5 / 5 | 150 s |
+| 2 | 7 / 8 / 8 | 230 s |
+| 3 | 6 / 6 / 7 | 190 s |
+| 4 | 5 / 5 / 6 | 160 s |
 
 These accelerated simulations use the real rules; they do not measure human 10–15 minute session pacing. Later chapters at faster tapping rates fall below provisional 7–9 / 9–12 day targets. Milestone rewards plus permanent relics produce substantial scaling despite lower passive income and interest. Goals have deliberately not been retuned. The shared time cap makes some time builds mutually redundant; exclusion avoids offering fully ineffective additional time levels. Cabrito level labels count acquisitions, while its effect remains a fixed refill. Human testing and additional seeds are needed before locking balance.
 
-Automatic milestone validation retains the same goals and effects. The changed seeded results reflect skipped winning-day choices changing subsequent RNG consumption; they are not a balance retune. Human playtime remains unmeasured.
+Automatic milestone validation retains the same goals and effects. The changed seeded results reflect the three-day event cadence and skipped winning-day choices changing subsequent RNG consumption; they are not a balance retune. Human playtime remains unmeasured.
+
+The overview/start button is removed from ordinary and chapter-start flow. A 0.4-second input-safe transition displays the existing heart before the workday clock starts. This delay is not counted as tapping time or workdays.
