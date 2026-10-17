@@ -1,0 +1,95 @@
+name: Build Web (no deployment)
+
+on:
+  pull_request:
+    branches: [main, feature/v0.4-cozy-pixel-arcade]
+  push:
+    branches: [main, build/web-export]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install matching Godot and single-thread Web templates
+        run: |
+          set -euo pipefail
+          tool_dir="$RUNNER_TEMP/godot"
+          mkdir -p "$tool_dir"
+          release_url="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          curl --fail --location --retry 3 "$release_url/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o "$tool_dir/editor.zip"
+          curl --fail --location --retry 3 "$release_url/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o "$tool_dir/templates.tpz"
+          unzip -q "$tool_dir/editor.zip" -d "$tool_dir"
+          mv "$tool_dir/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$tool_dir/godot"
+          chmod +x "$tool_dir/godot"
+          template_dir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$template_dir"
+          unzip -j -q "$tool_dir/templates.tpz" 'templates/web_nothreads_debug.zip' 'templates/web_nothreads_release.zip' -d "$template_dir"
+          echo "$tool_dir" >> "$GITHUB_PATH"
+          "$tool_dir/godot" --version
+
+      - name: Import project
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/godot-logs"
+          godot --headless --path . --editor --quit 2>&1 | tee "$RUNNER_TEMP/godot-logs/import.log"
+          if rg -n 'SCRIPT ERROR:|ERROR:' "$RUNNER_TEMP/godot-logs/import.log"; then
+            exit 1
+          fi
+
+      - name: Run existing regression suite
+        run: |
+          set -euo pipefail
+          godot --headless --path . tests/test_foundation.tscn 2>&1 | tee "$RUNNER_TEMP/godot-logs/tests.log"
+          if rg -n 'SCRIPT ERROR:|ERROR:' "$RUNNER_TEMP/godot-logs/tests.log"; then
+            exit 1
+          fi
+
+      - name: Export single-thread Web release
+        run: |
+          set -euo pipefail
+          mkdir -p build/web
+          godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee "$RUNNER_TEMP/godot-logs/export.log"
+          if rg -n 'SCRIPT ERROR:|ERROR:' "$RUNNER_TEMP/godot-logs/export.log"; then
+            exit 1
+          fi
+          for file in index.html index.js index.wasm index.pck; do
+            test -s "build/web/$file"
+          done
+          # Artifact records the exact source revision without modifying game files.
+          git rev-parse HEAD > build/web/build-commit.txt
+
+      - name: Upload complete website package
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-more-flight-web-${{ github.sha }}
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: godot-logs-${{ github.sha }}
+          path: ${{ runner.temp }}/godot-logs/
+          if-no-files-found: ignore
+          retention-days: 7
