@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "cafecito"
+title = "Cafecito Extra Fuerte"
+description = "Workdays last 3 seconds longer (maximum +9)."
+effect = "duration"
+amount = 3
+price = 80

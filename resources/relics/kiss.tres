@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "kiss"
+title = "Goodbye Kiss"
+description = "Start each new chapter with Extra Spa Appointment for free."
+effect = "free_upgrade"
+amount = 1
+price = 0

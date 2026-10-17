@@ -1,0 +1,49 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="One More Flight"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+SaveManager="*res://scripts/managers/save_manager.gd"
+AudioManager="*res://scripts/managers/audio_manager.gd"
+GameManager="*res://scripts/managers/game_manager.gd"
+SceneManager="*res://scripts/managers/scene_manager.gd"
+
+[display]
+
+window/size/min_width=360
+window/size/min_height=640
+window/size/viewport_width=390
+window/size/viewport_height=844
+window/size/window_width_override=390
+window/size/window_height_override=844
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
+

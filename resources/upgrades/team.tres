@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "team"
+title = "Spa Besties"
+description = "Passive income is 50% stronger; receive 12 base taps now."
+effect = "team"
+amount = 0.5
+price = 85

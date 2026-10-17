@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "bracelet"
+title = "Matching Bracelets"
+description = "All earnings increase 15%; also strengthens passive income."
+effect = "all_income"
+amount = 0.15
+price = 0

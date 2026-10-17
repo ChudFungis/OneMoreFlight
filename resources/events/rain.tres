@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "rain"
+title = "Rainy Day Rescue"
+description = "A slow day costs 8% of savings, or Josh sends a small 8-tap pick-me-up."
+effect = "loss"
+amount = 0.08
+negative = true
+alternative = "Accept Josh’s pick-me-up"
+alternative_effect = "gift"
+alternative_amount = 8
+price = 0

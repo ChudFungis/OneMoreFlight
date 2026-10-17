@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "postcard"
+title = "Monterrey Postcard"
+description = "Earn 2 base taps per second while working."
+effect = "passive"
+amount = 2
+price = 0

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "sale"
+title = "Fare Alert!"
+description = "Josh has 47 flight tabs open. Your ticket is 10% cheaper."
+effect = "discount"
+amount = 0.1
+negative = false
+alternative = ""
+alternative_effect = ""
+alternative_amount = 0
+price = 0

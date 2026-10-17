@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FlightDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+id = "call"
+title = "Josh Is Calling"
+description = "Answer for a 20-tap gift, or stay focused for 40 boosted taps."
+effect = "gift"
+amount = 20
+negative = false
+alternative = "Stay focused: boost 40 taps"
+alternative_effect = "burst"
+alternative_amount = 40
+price = 0
