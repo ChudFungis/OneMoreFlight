@@ -41,3 +41,5 @@ Use `godot` instead of the application path if installed on PATH. The suite uses
 Active saves use `user://save_data.json`, normally `~/Library/Application Support/Godot/app_userdata/One More Flight/` on macOS. Saves stay on the device/browser. The home screen always opens first and never resumes unfinished progress. Its heart resets active progression; local completed-run records live separately in `user://results.json`. Lowest total workdays wins, with tied scores treated equally.
 
 Read [architecture](docs/ARCHITECTURE.md), [content and balance](docs/GAME_DESIGN.md), [art replacement](docs/ARTWORK.md), [Web export](docs/WEB_EXPORT.md), and [validation](docs/VALIDATION.md).
+
+The v0.4 Cozy Pixel Arcade presentation bundles Baloo 2 locally (license in assets/fonts), shared tactile controls and crisp pixel icons. Colors, frames, button depth and typography roles are centralized in `scripts/ui/flight_style.gd`; see [UI design](docs/UI_DESIGN.md) for customization.

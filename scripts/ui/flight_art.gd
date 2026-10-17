@@ -16,5 +16,5 @@ static func image(folder: String, id: String, explicit: Texture2D = null) -> Tex
 	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	node.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if folder == "heart" else CanvasItem.TEXTURE_FILTER_LINEAR
+	node.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	return node

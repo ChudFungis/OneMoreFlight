@@ -37,3 +37,5 @@ The output contains HTML, JavaScript, WASM, PCK, icons and audio helper files. N
 ## v0.3.3 flow check
 
 The normal Web release command succeeds for `/tmp/one-more-flight-v033-web/index.html` using the installed matching templates. The preset still disables threads and extensions. The export includes the existing artwork, local-results support and new transition phase. A browser connection was unavailable during validation; confirm automatic day starts, release guards after cards/events, focus pause, day-3/day-6 events, reload during the brief transition and local results on actual mobile browsers before sharing the build. The build was not published.
+
+Version 0.4 also exports successfully with the same installed 4.7.2 templates and unchanged Web preset. Output is `/tmp/one-more-flight-v04-web/index.html`; Baloo 2 is packaged locally. Browser/device runtime validation remains outstanding.

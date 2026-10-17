@@ -46,3 +46,13 @@ Tapping a collected item opens FlightItemDetails: its name, owned level/max leve
 ## v0.3.3 flow refinement
 
 The existing tapping layout is displayed directly between workdays and after relic selection; chapter overview artwork and its manual start action no longer interrupt play. Artwork files and collection components are retained. A short Day X indicator replaces the timer during the 0.4-second entrance, with the same heart temporarily disabled. Once fully visible and released input is observed, the screen enables input and starts the unchanged 10-second workday. Reward/event/relic/story/home/results designs and illustrations are unchanged. Reduced motion keeps its existing behavior; the short input-safety delay remains.
+
+## v0.4 Cozy Pixel Arcade
+
+FlightStyle remains the single shared design system: warm cream, burgundy outlines, bright rose faces, blush secondary surfaces, compact 5-pixel corners and hard offset depth rather than blurred shadows. `card()` frames panels and reward tiles; `button_style()` shifts label padding and reduces depth while pressed; `style_button()` adds the common release sheen. `utility()` keeps secondary navigation compact, icon-first and at least 52 logical pixels high. The heart asset, hit area and squash animation are unchanged.
+
+Baloo 2 is bundled with its OFL license in assets/fonts. FontVariation resources choose Medium 500 (prose), SemiBold 600 (labels/metadata), Bold 700 (primary actions/card titles) and ExtraBold 800 (headings). Adjust the shared resources or FlightStyle font constants to change the hierarchy; FlightScreen.label_text and the item detail label helper apply heading/metadata roles. The inherited theme covers sliders, toggles, tooltips and dynamically created labels.
+
+All mapped illustrations are retained. FlightArt now uses nearest filtering consistently; smooth text remains antialiased. New pause/home pixel icons use the existing 7x7 UI grid. Shared heart/sparkle dividers add static decoration to home, stories, Pause and keepsakes. Existing brief entrances, reward feedback and selection animations remain bounded and respect reduced motion. No continuous particle loop was added.
+
+Pause emphasizes Resume, with compact icon-and-label Settings and Save & Main Menu beneath. The latter label is intentionally retained: the existing handler persists the run; home still starts a fresh run. This iteration changes no save/navigation rules. Existing reward selection/confirmation is retained, with no extra confirmation step.

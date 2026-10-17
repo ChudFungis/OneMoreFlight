@@ -44,6 +44,9 @@ func run_checks() -> void:
 	main = preload("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	check(SceneManager.screen_host.get_child(0).view == "main_menu", "Main menu missing")
+	for font: FontVariation in [FlightStyle.FONT_MEDIUM, FlightStyle.FONT_SEMIBOLD, FlightStyle.FONT_BOLD, FlightStyle.FONT_HEADING]:
+		var coordinates := TextServerManager.get_primary_interface().font_get_variation_coordinates(font.get_rids()[0])
+		check(font.get_font_name() == "Baloo 2" and coordinates == font.variation_opentype, "Baloo weight is not applied to the rendered font")
 	await capture_view("main_menu", 390)
 	await check_home_results()
 	await check_milestones()
@@ -53,10 +56,12 @@ func run_checks() -> void:
 	check(is_equal_approx(GameManager.remaining, 10), "Shift length incorrect")
 	check(is_equal_approx(GameManager.tap(), 5), "Base income incorrect")
 	SceneManager.pause_run()
+	await capture_modal("pause")
 	var before := GameManager.remaining
 	GameManager.advance_time(2)
 	check(GameManager.tap() == 0 and GameManager.remaining == before, "Pause changed gameplay")
 	SceneManager.open_settings()
+	await capture_modal("settings")
 	SceneManager.close_settings()
 	check(get_tree().paused and SceneManager.overlay_host.get_child(0).view == "pause_menu", "Settings lost pause context")
 	SceneManager.resume_run()
@@ -747,6 +752,7 @@ func check_collection_ui() -> void:
 	get_tree().root.size = Vector2i(390, 844)
 
 func capture_modal(label: String) -> void:
+	await get_tree().create_timer(0.25, true).timeout
 	await get_tree().process_frame
 	await get_tree().process_frame
 	check_buttons(SceneManager.overlay_host)

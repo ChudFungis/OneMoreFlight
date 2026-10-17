@@ -27,3 +27,7 @@ Keep replacement textures modest for phone downloads, preferably below 512 KB ea
 `FlightStyle` centralizes colors, borders, card corners, shadows, spacing and animation durations. Godot's bundled readable default font is retained, with no external font dependency. `FlightScreen` owns layout and interactions; `FlightArt` owns artwork resolution. Existing scenes still use FlightScreen, and the persistent main scene applies FlightStyle's theme to screens and overlays.
 
 Settings includes Reduced motion. It is saved separately in `user://presentation.cfg`, leaving campaign snapshots and the v0.2 SaveManager unchanged. It suppresses heart scaling, image/card entrances, combo tint pulses, drifting earnings and optional sparkles. Feedback remains visible with short opacity fades; decision controls never wait for an animation.
+
+### v0.4 UI treatment
+
+The existing heart and all content illustrations are unchanged. UI pixel assets now also include `pause.svg`, `home.svg`, `toggle_on.svg`, `toggle_off.svg` and `knob.svg`. These use the same burgundy/rose grid treatment as existing utility icons. All FlightArt images use nearest texture filtering; fonts stay smoothly antialiased. Existing explicit texture > PNG > WebP > SVG > fallback resolution remains intact.

@@ -42,6 +42,7 @@ func label_text(text: String, font_size: int = 18, color: Color = FlightStyle.IN
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_override("font", FlightStyle.FONT_HEADING if font_size >= 23 else (FlightStyle.FONT_SEMIBOLD if font_size <= 16 else FlightStyle.FONT_MEDIUM))
 	label.add_theme_color_override("font_color", color)
 	body.add_child(label)
 	return label
@@ -53,11 +54,7 @@ func button(text: String, action: Callable, primary: bool = false) -> Button:
 	result.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	result.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	result.add_theme_font_size_override("font_size", 19)
-	if primary:
-		var style := FlightStyle.card()
-		style.bg_color = FlightStyle.BURGUNDY
-		result.add_theme_stylebox_override("normal", style)
-		result.add_theme_color_override("font_color", Color.WHITE)
+	FlightStyle.style_button(result, primary)
 	result.pressed.connect(action)
 	body.add_child(result)
 	return result
@@ -116,7 +113,7 @@ func rebuild() -> void:
 	toast = label_text("", 15, FlightStyle.BURGUNDY)
 	refresh()
 	adapt_layout()
-	if not FlightStyle.reduced_motion:
+	if not FlightStyle.reduced_motion and not get_tree().paused:
 		body.modulate.a = 0
 		create_tween().tween_property(body, "modulate:a", 1.0, FlightStyle.ENTER_SECONDS)
 	if view == "game":
@@ -172,9 +169,20 @@ func centered_label(text: String, font_size: int, color: Color = FlightStyle.INK
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
 
+func pixel_divider() -> void:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 14)
+	body.add_child(row)
+	for id: String in ["sparkle", "heart", "sparkle"]:
+		var icon := FlightArt.image("ui", id)
+		icon.custom_minimum_size = Vector2(14, 14)
+		row.add_child(icon)
+
 func build_menu() -> void:
+	pixel_divider()
 	centered_label("A LITTLE ADVENTURE FOR YOU ♡", 12, FlightStyle.MUTED)
-	centered_label("One More Flight ♡", 32, FlightStyle.BURGUNDY)
+	centered_label("One More Flight ♡", 36, FlightStyle.BURGUNDY)
 	centered_label("Every tap brings us closer.", 17, FlightStyle.MUTED)
 	var space := Control.new()
 	space.custom_minimum_size.y = 12
@@ -210,7 +218,7 @@ func build_menu() -> void:
 		control.custom_minimum_size.x = 110
 		control.add_theme_constant_override("icon_max_width", 22)
 		control.add_theme_font_size_override("font_size", 15)
-		control.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		FlightStyle.utility(control, entry[1])
 		control.reparent(footer)
 	if SaveManager.results.last_error != OK:
 		centered_label("Local results couldn’t be saved. Please keep this window open and try again.", 14, FlightStyle.BURGUNDY)
@@ -256,11 +264,18 @@ func build_results() -> void:
 	button("Back ♡", show_home)
 
 func build_pause() -> void:
-	label_text("A little breather ♡", 29)
-	label_text("Your workday is paused. Josh can wait a minute. Probably.")
+	centered_label("A Little Breather ♡", 29, FlightStyle.BURGUNDY)
+	centered_label("Josh can wait a minute. Probably.", 18)
+	pixel_divider()
 	button("Resume", SceneManager.resume_run, true)
-	button("Settings", SceneManager.open_settings)
-	button("Save & Main Menu", GameManager.main_menu)
+	var settings := button("Settings", SceneManager.open_settings)
+	FlightStyle.utility(settings, "gear")
+	settings.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	settings.custom_minimum_size.x = 230
+	var menu := button("Save & Main Menu", GameManager.main_menu)
+	FlightStyle.utility(menu, "home")
+	menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	menu.custom_minimum_size.x = 230
 
 func build_settings() -> void:
 	label_text("Make yourself comfortable", 28)
@@ -331,6 +346,7 @@ func build_game() -> void:
 		"event": build_event()
 		"story": build_story()
 		"relic":
+			pixel_divider()
 			label_text("A Memory to Keep ♡", 28, FlightStyle.BURGUNDY)
 			label_text("Choose one keepsake. Its bonus stays for every chapter ahead.", 16)
 			build_choices(true)
@@ -352,11 +368,11 @@ func build_game() -> void:
 	if GameManager.phase in ["ready", "transition", "work"]:
 		build_item_lists()
 	if GameManager.phase not in ["story", "ending"]:
-		var pause_control := button("Ⅱ  Pause / Save", SceneManager.pause_run)
+		var pause_control := button("Pause / Save", SceneManager.pause_run)
 		pause_control.custom_minimum_size = Vector2(140, 52)
 		pause_control.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		pause_control.add_theme_font_size_override("font_size", 15)
-		pause_control.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		FlightStyle.utility(pause_control, "pause")
 
 func restart_adventure() -> void:
 	if decision_locked or GameManager.phase != "ending":
@@ -490,8 +506,10 @@ func choice_card(item: FlightDefinition, relic: bool) -> void:
 	var old_body := body
 	body = text
 	var badge := "PERMANENT KEEPSAKE" if relic else ("NEW" if GameManager.count(item.id) == 0 else "LEVEL %d" % (GameManager.count(item.id) + 1))
-	label_text(badge, 12, FlightStyle.BURGUNDY)
-	label_text(item.title, 17, FlightStyle.INK)
+	var badge_label := label_text("✦ " + badge, 13, FlightStyle.BURGUNDY)
+	badge_label.add_theme_stylebox_override("normal", FlightStyle.badge())
+	var title := label_text(item.title, 19, FlightStyle.INK)
+	title.add_theme_font_override("font", FlightStyle.FONT_BOLD)
 	label_text(effect_summary(item, relic), 15, FlightStyle.MUTED)
 	body = old_body
 	# Button children need an explicit height derived from their full layout.
@@ -604,6 +622,7 @@ func commit_event(alternative: bool) -> void:
 	celebrate("A lovely little bonus ♡")
 
 func build_story() -> void:
+	pixel_divider()
 	artwork(STORY.illustrations[GameManager.chapter], 280)
 	label_text(STORY.titles[GameManager.chapter], 27, FlightStyle.BURGUNDY)
 	label_text(STORY.paragraphs[GameManager.chapter])

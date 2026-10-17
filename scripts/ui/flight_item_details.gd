@@ -52,6 +52,7 @@ func _ready() -> void:
 		add_label(content, "Repeatable refill · %d / %d shared charges remaining" % [GameManager.burst_clicks, GameManager.balance.burst_cap], 15, FlightStyle.MUTED)
 	var done := Button.new()
 	done.text = "Close ♡"
+	FlightStyle.style_button(done)
 	done.custom_minimum_size.y = 52
 	done.pressed.connect(close)
 	content.add_child(done)
@@ -62,6 +63,7 @@ func add_label(parent: VBoxContainer, text: String, font_size: int, color: Color
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_override("font", FlightStyle.FONT_HEADING if font_size >= 23 else FlightStyle.FONT_MEDIUM)
 	label.add_theme_color_override("font_color", color)
 	parent.add_child(label)
 
