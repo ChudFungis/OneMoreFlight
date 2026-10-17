@@ -6,7 +6,8 @@ const STORY = preload("res://resources/story.tres")
 var body: VBoxContainer
 var money_label: Label
 var timer_label: Label
-var bonus_label: Label
+var item_lists: VBoxContainer
+var item_rows: Dictionary = {}
 var progress: ProgressBar
 var tap_button: Button
 var toast: Label
@@ -75,7 +76,8 @@ func rebuild() -> void:
 	effects_label = null
 	money_label = null
 	timer_label = null
-	bonus_label = null
+	item_lists = null
+	item_rows.clear()
 	progress = null
 	tap_button = null
 	var background := ColorRect.new()
@@ -111,7 +113,7 @@ func rebuild() -> void:
 	if view == "game":
 		if GameManager.phase == "upgrades" and last_phase == "work":
 			celebrate("Workday complete ♡")
-		elif GameManager.phase == "story" and last_phase == "ready":
+		elif GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades", "event"]:
 			celebrate("One flight closer ✦")
 		if GameManager.phase == "ending" and last_phase != "ending":
 			celebrate("You made it! ♡", true)
@@ -279,9 +281,8 @@ func build_game() -> void:
 		"ready":
 			artwork("main_menu", 180)
 			label_text("A little hustle. A lot of love.", 24)
-			label_text("Work for 10 seconds, then pick a free ability. Every second day brings a little plot twist.", 16)
+			label_text("Work for 10 seconds. Reach the savings goal to travel automatically.", 16)
 			button("Let’s get to work ♡", GameManager.start_shift, true)
-			trip_button()
 		"work":
 			timer_label = label_text("", 30, FlightStyle.BURGUNDY)
 			timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -316,12 +317,13 @@ func build_game() -> void:
 			button("Home ♡", GameManager.main_menu)
 			button("Start another adventure", restart_adventure, true)
 	if GameManager.phase in ["ready", "work"]:
-		var details := button("Your abilities & keepsakes ▾", toggle_details)
-		details.add_theme_font_size_override("font_size", 15)
-		bonus_label = label_text("", 14, FlightStyle.MUTED)
-		bonus_label.visible = false
+		build_item_lists()
 	if GameManager.phase not in ["story", "ending"]:
-		button("Pause / Save", SceneManager.pause_run)
+		var pause_control := button("Ⅱ  Pause / Save", SceneManager.pause_run)
+		pause_control.custom_minimum_size = Vector2(140, 52)
+		pause_control.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		pause_control.add_theme_font_size_override("font_size", 15)
+		pause_control.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 
 func restart_adventure() -> void:
 	if decision_locked or GameManager.phase != "ending":
@@ -329,9 +331,70 @@ func restart_adventure() -> void:
 	decision_locked = true
 	GameManager.new_game()
 
-func toggle_details() -> void:
-	if is_instance_valid(bonus_label):
-		bonus_label.visible = not bonus_label.visible
+func build_item_lists() -> void:
+	item_lists = VBoxContainer.new()
+	item_lists.add_theme_constant_override("separation", 6)
+	body.add_child(item_lists)
+	var previous := body
+	body = item_lists
+	for folder: String in ["upgrades", "relics"]:
+		label_text("Abilities" if folder == "upgrades" else "Keepsakes", 16, FlightStyle.BURGUNDY)
+		var flow := HFlowContainer.new()
+		flow.add_theme_constant_override("h_separation", 8)
+		flow.add_theme_constant_override("v_separation", 4)
+		body.add_child(flow)
+		var ids: Array = GameManager.upgrades.keys() if folder == "upgrades" else GameManager.relics
+		var catalog: Array = FlightCatalog.UPGRADES if folder == "upgrades" else FlightCatalog.RELICS
+		for id: String in ids:
+			item_row(flow, FlightCatalog.find_item(catalog, id), folder)
+		if ids.is_empty():
+			label_text("None yet", 14, FlightStyle.MUTED)
+	body = previous
+
+func item_row(flow: HFlowContainer, item: FlightDefinition, folder: String) -> void:
+	var row := Button.new()
+	row.tooltip_text = item.title
+	row.custom_minimum_size = Vector2(150, 52)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	var pressed := StyleBoxFlat.new()
+	pressed.bg_color = FlightStyle.BLUSH
+	pressed.set_corner_radius_all(8)
+	row.add_theme_stylebox_override("pressed", pressed)
+	row.add_theme_stylebox_override("hover", StyleBoxEmpty.new())
+	flow.add_child(row)
+	item_rows[folder + "/" + item.id] = row
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side: String in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 6)
+	row.add_child(margin)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	margin.add_child(line)
+	var icon := FlightArt.image(folder, item.id, item.icon)
+	icon.custom_minimum_size = Vector2(24, 24)
+	line.add_child(icon)
+	var title := Label.new()
+	title.text = item.title
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_color_override("font_color", FlightStyle.BURGUNDY)
+	line.add_child(title)
+	line.minimum_size_changed.connect(func() -> void:
+		row.custom_minimum_size.y = maxf(52, line.get_combined_minimum_size().y + 12))
+	ignore_pointer(margin)
+	row.pressed.connect(func() -> void: show_item_details(item, folder == "relics"))
+
+func show_item_details(item: FlightDefinition, relic: bool) -> void:
+	if SceneManager.overlay_host.get_child_count() > 0:
+		return
+	var popup := FlightItemDetails.new()
+	popup.item = item
+	popup.level = GameManager.count(item.id) if not relic else 0
+	popup.is_relic = relic
+	SceneManager.overlay_host.add_child(popup)
 
 func build_heart(action: Callable = Callable()) -> void:
 	tap_button = Button.new()
@@ -481,11 +544,6 @@ func adapt_layout() -> void:
 			image.custom_minimum_size = Vector2(120, 120) if wide else (Vector2(100, 100) if GameManager.phase == "relic" else Vector2(82, 82))
 			fit_card(card, row)
 
-func trip_button() -> void:
-	var affordable := GameManager.money >= GameManager.goal()
-	var result := button("Buy this trip ♡" if affordable else "Ticket goal · $%.0f" % GameManager.goal(), func() -> void: GameManager.buy_trip(), affordable)
-	result.disabled = not affordable
-
 func event_reward(event: FlightDefinition, alternative: bool) -> String:
 	var effect := event.alternative_effect if alternative else event.effect
 	var amount := event.alternative_amount if alternative else event.amount
@@ -527,16 +585,6 @@ func refresh() -> void:
 		timer_label.text = "%.1f seconds" % GameManager.remaining
 	if is_instance_valid(effects_label):
 		effects_label.text = "Combo %d  ·  %d boosted taps" % [GameManager.combo, GameManager.burst_clicks]
-	if is_instance_valid(bonus_label):
-		var names: PackedStringArray = []
-		for id: String in GameManager.upgrades:
-			var item := FlightCatalog.find_item(FlightCatalog.UPGRADES, id)
-			names.append("%s ×%d" % [item.title, GameManager.count(id)])
-		for id: String in GameManager.relics:
-			names.append("♡ " + FlightCatalog.find_item(FlightCatalog.RELICS, id).title)
-		bonus_label.text = "Bonuses: " + (", ".join(names) if not names.is_empty() else "A fresh start and a big dream.")
-		if GameManager.phase == "work":
-			bonus_label.text += "\nCombo %d · Boosted taps %d" % [GameManager.combo, GameManager.burst_clicks]
 	if GameManager.save_error and is_instance_valid(toast):
 		toast.text = "Save unavailable. Keep this tab open and try Pause / Save again."
 

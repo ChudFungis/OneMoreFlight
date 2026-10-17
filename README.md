@@ -8,8 +8,8 @@ Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait 
 
 1. Tap the home-screen heart to start a fresh adventure in Denver immediately. Your best completed adventure and five recent results stay saved. Results and Settings are the small controls below the heart.
 2. Begin a 10-second workday and tap the large pixel heart. Abilities can extend it to 16 seconds. Money is travel savings.
-3. After each workday, highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every second completed chapter day then presents one event with two beneficial choices.
-4. Buy the trip after required choices when you can afford it. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
+3. After each below-goal workday, highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every second completed chapter day below the goal then presents one event with two beneficial choices.
+4. Reach the savings milestone to enter the reunion story automatically after the workday settles, skipping its normal reward/event choices. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
 5. Complete Denver, Italy, and the final one-way ticket to reach the ending.
 
 Pause / Save freezes work; Settings and Main Menu remain available. Losing application focus pauses the campaign. The game saves after decisions, when pausing, and every two seconds of active work. No offline earnings or real-money purchases. Reduced motion is available in Settings. Audio buses/settings are retained; this version intentionally has no soundtrack.

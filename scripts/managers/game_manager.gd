@@ -203,11 +203,13 @@ func tap() -> float:
 	return reward
 
 func finish_shift() -> void:
-	if phase != "work":
+	if phase != "work" or remaining > 0:
 		return
 	days += 1
 	total_days += 1
 	money *= 1.0 + minf(power("jar"), 0.06)
+	if _complete_chapter():
+		return
 	offers = upgrade_offers()
 	pending_event = days % maxi(1, balance.event_interval) == 0
 	event_id = ""
@@ -222,6 +224,8 @@ func finish_shift() -> void:
 		set_phase("upgrades")
 
 func complete_reward() -> void:
+	if _complete_chapter():
+		return
 	offers = []
 	set_phase("event" if pending_event else "ready")
 
@@ -278,12 +282,19 @@ func resolve_event(alternative: bool = false) -> void:
 	last_event_id = event_id
 	event_id = ""
 	pending_event = false
-	set_phase("ready")
+	if not _complete_chapter():
+		set_phase("ready")
 
-func buy_trip() -> bool:
-	if phase != "ready" or money < goal():
+func _complete_chapter() -> bool:
+	# Only settled workdays can reach a milestone; never interrupt active tapping.
+	if phase not in ["work", "ready", "upgrades", "event"] or days <= 0 or money < goal() or chapter in completed_chapters:
 		return false
-	money -= goal()
+	if phase == "work" and remaining > 0:
+		return false
+	offers = []
+	event_id = ""
+	pending_event = false
+	remaining = 0
 	if chapter not in completed_chapters:
 		completed_chapters.append(chapter)
 		chapter_days.append(days)
@@ -409,6 +420,9 @@ func restore(data: Dictionary) -> bool:
 			phase = "event" if pending_event else "ready"
 	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + minf(balance.playlist_extension_cap, balance.max_shift_extension - fixed_extension()))
 	save_clock = 0
+	# Older saves may be waiting for a manual trip after a settled workday.
+	if phase in ["ready", "upgrades", "event"]:
+		_complete_chapter()
 	return true
 
 func safe_number(value: Variant, fallback: float, maximum: float) -> float:

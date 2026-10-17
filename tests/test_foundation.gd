@@ -38,6 +38,7 @@ func run_checks() -> void:
 	check(SceneManager.screen_host.get_child(0).view == "main_menu", "Main menu missing")
 	await capture_view("main_menu", 390)
 	await check_home_results()
+	await check_milestones()
 	GameManager.new_game()
 	check(GameManager.phase == "ready" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
@@ -88,7 +89,7 @@ func run_checks() -> void:
 	check(GameManager.days == 1, "Timer completed twice")
 	check(GameManager.offers.size() == 3, "Expected 3 upgrade offers")
 	GameManager.money = 0
-	check(not GameManager.buy_trip(), "Travel bypassed mandatory reward")
+	check(GameManager.phase == "upgrades", "Below-goal workday did not offer a reward")
 	GameManager.next_day()
 	check(GameManager.phase == "upgrades", "Reward could be skipped")
 	GameManager.money = 1000
@@ -118,11 +119,12 @@ func run_checks() -> void:
 	GameManager.upgrades = {}
 	GameManager.apply_upgrade(item("jar"))
 	GameManager.money = 100
+	GameManager.remaining = 0
 	GameManager.finish_shift()
 	check(is_equal_approx(GameManager.money, 102), "Interest failed")
 	GameManager.phase = "ready"
 	GameManager.money = 0
-	check(not GameManager.buy_trip(), "Unaffordable trip accepted")
+	check(GameManager.phase == "ready", "Below-goal state changed unexpectedly")
 	SaveManager.settings["music_volume"] = 0.23
 	SaveManager.settings["sfx_volume"] = 0.0
 	AudioManager.apply_settings()
@@ -208,12 +210,7 @@ func simulate_game(rate: int) -> void:
 	while GameManager.phase != "ending" and guard < 150:
 		guard += 1
 		match GameManager.phase:
-			"ready":
-				if GameManager.money >= GameManager.goal():
-					chapter_days.append(GameManager.days)
-					check(GameManager.buy_trip(), "Earned trip could not be purchased")
-				else:
-					GameManager.start_shift()
+			"ready": GameManager.start_shift()
 			"work":
 				while GameManager.phase == "work":
 					GameManager.tap()
@@ -228,7 +225,9 @@ func simulate_game(rate: int) -> void:
 						chosen = preferred
 						break
 				check(GameManager.buy_upgrade(chosen), "Required reward failed in simulation")
-			"story": GameManager.finish_story()
+			"story":
+				chapter_days.append(GameManager.days)
+				GameManager.finish_story()
 			"relic": GameManager.choose_relic(GameManager.offers[0])
 		await get_tree().process_frame
 	check(GameManager.complete and GameManager.completed_chapters.size() == 3 and GameManager.relics.size() == 2, "Full game not reachable at %d taps/sec" % rate)
@@ -268,6 +267,7 @@ func check_redesign() -> void:
 	check(GameManager.upgrade_offers().is_empty(), "Exhausted rewards still offered")
 	GameManager.phase = "work"
 	GameManager.days = 1
+	GameManager.remaining = 0
 	GameManager.finish_shift()
 	check(GameManager.phase == "event", "Exhausted rewards blocked required event")
 	GameManager.resolve_event()
@@ -382,7 +382,8 @@ func capture_decisions() -> void:
 		await capture_view("event", width)
 		GameManager.resolve_event()
 		GameManager.money = GameManager.goal()
-		GameManager.buy_trip()
+		GameManager.start_shift()
+		GameManager.advance_time(100)
 		await capture_view("story", width)
 		GameManager.finish_story()
 		await capture_view("relics", width)
@@ -447,6 +448,7 @@ func check_presentation() -> void:
 	check(GameManager.money == before_money + 150, "GUI tap payouts changed")
 	check(screen.timer_label.text == "10.0 seconds", "Timer display does not match remaining time")
 	check(screen.feedback_count >= 30 and screen.feedback_count <= 35, "Earnings feedback missing or particles excessive")
+	GameManager.remaining = 0
 	GameManager.finish_shift()
 	screen = SceneManager.screen_host.get_child(0)
 	var id: String = GameManager.offers[0]
@@ -480,10 +482,12 @@ func check_presentation() -> void:
 func finish_test_adventure(counts: Array) -> void:
 	GameManager.new_game()
 	for chapter_day_count: int in counts:
-		GameManager.days = chapter_day_count
-		GameManager.total_days += chapter_day_count
+		GameManager.days = chapter_day_count - 1
+		GameManager.total_days += chapter_day_count - 1
 		GameManager.money = GameManager.goal()
-		check(GameManager.buy_trip(), "Test trip rejected")
+		GameManager.start_shift()
+		GameManager.advance_time(100)
+		check(GameManager.phase == "story", "Milestone did not complete chapter")
 		GameManager.finish_story()
 		if GameManager.phase == "relic":
 			GameManager.choose_relic(GameManager.offers[0])
@@ -575,3 +579,163 @@ func check_home_results() -> void:
 	GameManager.new_game()
 	check(results.best.total_days == 18 and results.recent.size() == 5, "New adventure erased completed records")
 	await get_tree().process_frame
+
+func check_milestones() -> void:
+	GameManager.new_game()
+	var history_size := SaveManager.results.recent.size()
+	var best_before := SaveManager.results.best.duplicate(true)
+	for chapter_index: int in range(3):
+		GameManager.apply_upgrade(item("flights"))
+		GameManager.apply_upgrade(item("jar"))
+		if chapter_index == 1:
+			check(GameManager.has_relic("passport"), "Travel relic did not persist")
+		GameManager.days = 1 # Complete on an event day: neither event nor reward may appear.
+		GameManager.total_days = chapter_index * 2 + 1
+		var target := GameManager.goal()
+		GameManager.money = target / 1.02 - 1
+		GameManager.start_shift()
+		GameManager.tap()
+		GameManager.money = target + 25
+		var working := GameManager.snapshot()
+		check(GameManager.restore(working) and GameManager.phase == "work", "Load completed a still-active workday")
+		GameManager.money = target / 1.02 + (100 if chapter_index == 1 else 0)
+		GameManager.finish_shift()
+		check(GameManager.phase == "work" and GameManager.days == 1, "Workday completed before timer expired")
+		GameManager.advance_time(GameManager.remaining - 0.1)
+		check(GameManager.phase == "work", "Milestone interrupted tapping")
+		GameManager.advance_time(0.1)
+		check(GameManager.phase == "story" and GameManager.days == 2, "Settled interest did not trigger milestone")
+		check(GameManager.offers.is_empty() and GameManager.event_id.is_empty() and not GameManager.pending_event, "Winning day showed upgrade/event")
+		check(is_equal_approx(GameManager.money, target + (102 if chapter_index == 1 else 0)), "Milestone deducted savings or interest incorrect")
+		var saved := GameManager.snapshot()
+		GameManager.finish_shift()
+		GameManager.advance_time(20)
+		check(GameManager.snapshot() == saved, "Milestone triggered twice")
+		SaveManager.load_data()
+		check(GameManager.restore(SaveManager.progression) and GameManager.phase == "story", "Milestone story lost on disk reload")
+		check(GameManager.completed_chapters.size() == chapter_index + 1 and GameManager.chapter_days.size() == chapter_index + 1, "Completion metadata duplicated on load")
+		GameManager.finish_story()
+		if chapter_index < 2:
+			# Choose a known relic using the existing choice API.
+			GameManager.offers = ["passport"] if chapter_index == 0 else ["kiss"]
+			GameManager.choose_relic(GameManager.offers[0])
+			check(GameManager.money == 0 and GameManager.days == 0 and GameManager.goal_multiplier == 1, "Excess savings carried into next chapter")
+			check(GameManager.upgrades.is_empty() or GameManager.upgrades == {"appointment": 1}, "Chapter reset retained ordinary abilities")
+	check(GameManager.phase == "ending" and GameManager.total_days == 6 and GameManager.complete, "Final automatic milestone did not finish")
+	check(SaveManager.results.recent[0].total_days == 6 and SaveManager.results.recent[0].chapter_days == [2, 2, 2], "Final automatic completion recorded wrong score")
+	check(GameManager.run_new_best and SaveManager.results.best.total_days == 6, "Automatic completion did not update personal best")
+	check(SaveManager.results.recent.size() == mini(5, history_size + 1) and best_before.total_days > 6, "Completed ledger count incorrect")
+	var recent := SaveManager.results.recent.duplicate(true)
+	GameManager.record_completed_run()
+	GameManager.restore(GameManager.snapshot())
+	GameManager.record_completed_run()
+	check(SaveManager.results.recent == recent, "Final score recorded twice")
+	# A discounted goal or event gift can finish an already settled day too.
+	GameManager.new_game()
+	GameManager.days = 1
+	GameManager.total_days = 1
+	GameManager.money = GameManager.goal() * 0.95
+	GameManager.phase = "upgrades"
+	GameManager.offers = ["flights"]
+	check(GameManager.buy_upgrade("flights") and GameManager.phase == "story", "Discount did not auto-complete settled day")
+	GameManager.new_game()
+	GameManager.days = 2
+	GameManager.total_days = 2
+	GameManager.money = GameManager.goal() - 1
+	GameManager.phase = "event"
+	GameManager.event_id = "call"
+	GameManager.resolve_event()
+	check(GameManager.phase == "story", "Event gift did not auto-complete settled day")
+	# Old manual-purchase saves with a reached milestone must not be stranded.
+	GameManager.new_game()
+	var legacy := GameManager.snapshot()
+	legacy.days = 2
+	legacy.total_days = 2
+	legacy.money = GameManager.goal() + 100
+	for pending: String in ["ready", "upgrades", "event"]:
+		legacy.phase = pending
+		legacy.offers = ["appointment", "love", "tips"]
+		legacy.event_id = "call"
+		check(GameManager.restore(legacy) and GameManager.phase == "story" and GameManager.days == 2, "Reached legacy milestone did not resume story")
+	await check_collection_ui()
+
+func collect_labels(node: Node) -> String:
+	var text: String = node.text + "\n" if node is Label else ""
+	for child: Node in node.get_children():
+		text += collect_labels(child)
+	return text
+
+func check_collection_ui() -> void:
+	GameManager.new_game()
+	GameManager.upgrades = {"flights": 1, "tips": 2, "love": 3}
+	GameManager.relics = ["bracelet", "passport"]
+	GameManager.set_phase("ready")
+	var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	check(screen.item_lists.visible and screen.item_rows.size() == 5, "Collected items are not always visible")
+	var inline_text := collect_labels(screen.item_lists)
+	check(inline_text.contains("Abilities") and inline_text.contains("Keepsakes"), "Collection headings missing")
+	check(not inline_text.contains("Bonuses:") and not inline_text.contains("per level"), "Detailed effects leaked into inline list")
+	await capture_view("collection", 390)
+	get_tree().root.size = Vector2i(360, 844)
+	await capture_view("collection", 360)
+	var before := GameManager.snapshot()
+	screen.item_rows["upgrades/love"].pressed.emit()
+	var modal: FlightItemDetails = SceneManager.overlay_host.get_child(0)
+	check(modal.item.id == "love" and modal.level == 3, "Item tap opened incorrect detail")
+	var text := collect_labels(modal)
+	check(text.contains("Level 3 / 3") and text.contains(item("love").description.get_slice("\n", 0)) and text.contains(item("love").description.get_slice("\n", 1)), "Detail omitted level, flavor, or exact effect")
+	check(GameManager.snapshot() == before, "Opening detail changed campaign/save state")
+	await capture_modal("ability_popup")
+	modal.close()
+	await get_tree().process_frame
+	screen.item_rows["relics/bracelet"].pressed.emit()
+	modal = SceneManager.overlay_host.get_child(0)
+	check(modal.is_relic and collect_labels(modal).contains("Permanent keepsake"), "Keepsake details missing")
+	await capture_modal("keepsake_popup")
+	var escape := InputEventAction.new()
+	escape.action = "ui_cancel"
+	escape.pressed = true
+	get_viewport().push_input(escape, true)
+	await get_tree().process_frame
+	check(SceneManager.overlay_host.get_child_count() == 0 and GameManager.state == GameManager.State.PLAYING, "Closing detail opened pause or left an overlay")
+	# Real-time processing is suspended locally, then restored without a save action.
+	GameManager.start_shift()
+	GameManager.set_process(true)
+	screen.show_item_details(item("flights"), false)
+	var remaining := GameManager.remaining
+	await get_tree().create_timer(0.1).timeout
+	check(GameManager.remaining == remaining, "Workday clock ran behind detail panel")
+	modal = SceneManager.overlay_host.get_child(0)
+	modal.close()
+	await get_tree().process_frame
+	check(GameManager.is_processing(), "Closing detail did not restore workday processing")
+	screen.show_item_details(item("flights"), false)
+	SceneManager.pause_run()
+	check(get_tree().paused and GameManager.is_processing() and SceneManager.overlay_host.get_child(0).view == "pause_menu", "Detail interrupted normal Pause/Save handling")
+	SceneManager.resume_run()
+	GameManager.set_process(false)
+	# Stress layout with the entire catalog; data/rules remain untouched.
+	for definition: FlightDefinition in FlightCatalog.UPGRADES:
+		GameManager.upgrades[definition.id] = 1
+	GameManager.relics = []
+	for definition: FlightDefinition in FlightCatalog.RELICS:
+		GameManager.relics.append(definition.id)
+	GameManager.set_phase("ready")
+	await capture_view("collection_full", 360)
+	for row: Button in screen.item_rows.values():
+		check(row.size.y >= 52 and row.get_global_rect().end.x <= screen.size.x, "Collection row clips or has a small touch target")
+	for definition: FlightDefinition in FlightCatalog.UPGRADES:
+		screen.show_item_details(definition, false)
+		modal = SceneManager.overlay_host.get_child(0)
+		check(collect_labels(modal).contains(definition.description.get_slice("\n", 1)), "Ability detail missing effect: " + definition.id)
+		modal.close()
+		await get_tree().process_frame
+	get_tree().root.size = Vector2i(390, 844)
+
+func capture_modal(label: String) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	check_buttons(SceneManager.overlay_host)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("/tmp/omf_%s.png" % label)

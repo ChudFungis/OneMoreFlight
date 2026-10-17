@@ -13,7 +13,7 @@ No `.tscn` files were replaced or modified. Existing main, game, main menu, sett
 
 The workday's text-free heart has a fixed 250-pixel logical hit area. Only its image compresses and springs back, so fast taps do not chase a moving input target. The existing pressed signal calls GameManager.tap once. Earnings labels use the earned signal's actual amount, rendered to cents; UI randomness never consumes campaign RNG. Small optional sparkles appear every sixth successful tap, with a stronger combo tint. Floating labels expire quickly, and optional particles are suppressed during heavy input.
 
-Workday status prioritizes destination/chapter/day, savings goal, compact progress, remaining seconds, heart, combo and burst count. Ability and relic details expand on request.
+Workday status prioritizes destination/chapter/day, savings goal, compact progress, remaining seconds, heart, combo and burst count. Abilities and Keepsakes are always visible as light icon/name collections, with effects available on tap.
 
 Upgrade/relic choices use three compact illustrated rows on phones, or three columns at logical widths >=720. All offered cards remain visible together at the tested portrait sizes. Every card is a touch target; tapping highlights it and enables one confirmation. Other cards dim. Confirmation calls the existing action and persists immediately; short celebrations never own gameplay state. A reload before confirmation restores the same mandatory offer without a highlight. A reload after confirmation restores the committed next phase.
 
@@ -36,3 +36,9 @@ The home screen now centers the existing pixel heart under “One More Flight �
 Your Adventures shows the retained personal best, the newest five completed runs, attempt IDs, UTC dates and per-chapter days when available. Hearts mark scores tied with the current best. The final summary leads with actual workdays and a new-best badge when earned, followed by the unchanged illustration/narrative and Home/Start another adventure actions. Existing workday and decision visuals are unchanged. Only the home heart's optional action required a small shared-component extension; the gameplay action remains the default.
 
 Two new original pixel icons are `assets/art/ui/trophy.svg` and `gear.svg`. The earlier missing-template limitation was resolved during this iteration by downloading the official matching Web templates. Web release export succeeds; a browser was not connected to the test tool, so browser storage and physical device checks remain outstanding.
+
+## Collection UI refinement
+
+The large “Your abilities & keepsakes” button is removed. Separate Abilities and Keepsakes sections use existing art at 24 logical pixels, burgundy name labels and transparent row hit areas. The flow layout wraps vertically as items accumulate; long names wrap within the row. Empty collections show “None yet.” Only the workday CTA retains a large filled button on the ready screen. Pause/Save is a compact, transparent 52-pixel target.
+
+Tapping a collected item opens FlightItemDetails: its name, owned level/max level (or permanent/refill status), original flavor line and exact Resource effect/caps are shown in a compact scrollable panel. Effects are not duplicated inline. Close, outside tap and Escape dismiss it. The workday clock is held while reading without awarding income, changing campaign phase or saving. Existing artwork, theme, gameplay formulas, content and reward probabilities remain unchanged.
