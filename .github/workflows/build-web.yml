@@ -1,4 +1,4 @@
-name: Build Web (no deployment)
+name: Build and publish Web
 
 on:
   pull_request:
@@ -85,6 +85,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Prepare Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web/
+
       - name: Upload diagnostic logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,3 +99,24 @@ jobs:
           path: ${{ runner.temp }}/godot-logs/
           if-no-files-found: ignore
           retention-days: 7
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages-production
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check Pages configuration
+        uses: actions/configure-pages@v5
+      - name: Publish game
+        id: deployment
+        uses: actions/deploy-pages@v4
