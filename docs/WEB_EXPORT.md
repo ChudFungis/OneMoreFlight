@@ -42,28 +42,24 @@ Version 0.4 also exports successfully with the same installed 4.7.2 templates an
 
 The suitcase collection also passes the unchanged Web release preset; local output is `/tmp/one-more-flight-suitcase-web/index.html`. It uses standard Controls, drawing and Tweens, with no shaders, physics or additional dependencies. Actual browser/device interaction still needs manual validation.
 
-## GitHub Actions build preparation (no publication)
+## GitHub Actions publishing
 
-The `.github/workflows/build-web.yml` workflow builds a downloadable website package only. It has read-only repository permissions, no Pages deployment job and no publishing credentials. Creating or merging this change does not publish the game.
+The owner approved first publication on 2026-10-17. The workflow `.github/workflows/build-web.yml` installs Godot 4.7.2 Standard and matching single-thread Web templates, imports assets, runs the existing isolated-save regression suite, and exports `build/web/index.html`. Generated files are ignored by Git and excluded from export inputs.
 
-The workflow runs for pull requests targeting `main` or `feature/v0.4-cozy-pixel-arcade`, pushes to `main` or `build/web-export`, and manual dispatch. GitHub normally exposes the manual Run workflow button only once the workflow exists on the default branch; the preparation branch push / pull request can run it beforehand.
+Pull requests build and upload a downloadable `one-more-flight-web-...` artifact without deploying. Pushes to `main`, or a manual run on `main`, additionally upload the complete Pages artifact and deploy through the `github-pages` environment. Build jobs have read-only repository permissions; only the deployment job has Pages write and OIDC permissions. No personal access token or external deployment service is required.
 
-It installs Godot 4.7.2 Standard and the matching no-thread Web templates from the official Godot build release, imports the project, runs the existing isolated-save regression scene, and exports to `build/web/index.html`. Engine error output fails the job even if Godot exits successfully. Build output is ignored by Git and excluded from export inputs so an earlier export cannot be packed into a later one. Do not commit generated HTML/JS/WASM/PCK files or the `.godot` cache.
+### One-time repository setting
 
-### Download and test
+In repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions**. The ordinary workflow token cannot enable a previously unconfigured Pages site. If the configuration step reports that the site is missing, set this option, then rerun failed jobs from the Actions run.
 
-1. Open the repository's **Actions** tab, select **Build Web (no deployment)** and open a successful run.
-2. Download the `one-more-flight-web-...` artifact from the run's Artifacts section and extract the entire ZIP. The package contains `index.html` and all companion files at its root, plus `build-commit.txt` identifying the tested source.
-3. Serve the extracted directory over HTTP, for example `python3 -m http.server 8000 --directory /path/to/extracted-artifact`. Opening the HTML directly using `file://` is unsupported.
-4. Test mobile Safari and Android Chrome: fresh launch, rapid heart taps, nested suitcase scrolling, reward/event selection, safe areas, rotation/address-bar resizing, focus loss/resume, and a complete three-chapter run.
-5. Reload and close/reopen the browser. Completed best/recent records and settings should survive when browser storage is allowed. The home heart intentionally starts a new run; unfinished campaign resumption is not the acceptance criterion.
-6. Confirm bundled Baloo text and decorative symbols, every dynamically loaded illustration, and the absence of browser-console errors. Repeat under a `/OneMoreFlight/` URL subpath before Pages publication.
-7. Download `godot-logs-...` if a run fails. A successful export is not proof of physical-device compatibility.
+The intended URL is https://chudfungis.github.io/OneMoreFlight/ . Do not call it live until the deployment succeeds and the URL is verified.
 
-### Later Pages release (separate approval)
+### Updates and testing
 
-The current newer game lives on `feature/v0.4-cozy-pixel-arcade`; do not deploy the older `main` by accident. Review and integrate that game version into the intended release branch separately.
+Merge reviewed game updates into `main`; the same import/test/export/deploy process updates the website automatically. Failed tests or exports prevent deployment. Keep the game name and local storage paths stable to preserve browser records where browser storage permits.
 
-After browser acceptance and explicit publishing approval, set Pages source to GitHub Actions and add a deployment job using the official configure-pages/upload-pages-artifact/deploy-pages actions. Only that job needs `pages: write`, `id-token: write` and the `github-pages` environment. Restrict publication to the approved release branch, while pull requests keep building without deploying. The website artifact must contain `index.html` at its root. Publish all companion files together over HTTPS and retain the same game name/storage paths for local scores. GitHub Pages is free for this public repository.
+Download the complete website artifact from a successful Actions run to test locally. Extract the whole ZIP and serve it over HTTP, for example `python3 -m http.server 8000 --directory /path/to/extracted-artifact`. Do not open `index.html` using `file://`. The artifact includes `build-commit.txt` identifying the source revision.
 
-No browser/device checks or new CI run are claimed by this preparation commit. Results must be recorded after the workflow actually executes.
+Before wider sharing, check mobile Safari and Android Chrome: launch, rapid taps, nested suitcase scrolling, choices, safe areas, address-bar resizing, rotation, tab switching/pause and a complete run. Verify bundled Baloo text, decorative symbols and every illustration at the actual `/OneMoreFlight/` URL. Reload and close/reopen the browser to check completed records/settings. The home heart intentionally starts a fresh run. Private mode, storage clearing or eviction can remove local scores.
+
+Initial build-only CI passed 10,978 checks with zero failures and produced a 10.8 MB website artifact (run 39061289621). Intentional corrupt-save recovery warnings were the only warnings in that run. Physical-device/browser persistence validation remains outstanding.
