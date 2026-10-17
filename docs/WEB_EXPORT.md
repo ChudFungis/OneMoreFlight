@@ -41,3 +41,25 @@ The normal Web release command succeeds for `/tmp/one-more-flight-v033-web/index
 Version 0.4 also exports successfully with the same installed 4.7.2 templates and unchanged Web preset. Output is `/tmp/one-more-flight-v04-web/index.html`; Baloo 2 is packaged locally. Browser/device runtime validation remains outstanding.
 
 The suitcase collection also passes the unchanged Web release preset; local output is `/tmp/one-more-flight-suitcase-web/index.html`. It uses standard Controls, drawing and Tweens, with no shaders, physics or additional dependencies. Actual browser/device interaction still needs manual validation.
+
+## GitHub Actions publishing
+
+The owner approved first publication on 2026-10-17. The workflow `.github/workflows/build-web.yml` installs Godot 4.7.2 Standard and matching single-thread Web templates, imports assets, runs the existing isolated-save regression suite, and exports `build/web/index.html`. Generated files are ignored by Git and excluded from export inputs.
+
+Pull requests build and upload a downloadable `one-more-flight-web-...` artifact without deploying. Pushes to `main`, or a manual run on `main`, additionally upload the complete Pages artifact and deploy through the `github-pages` environment. Build jobs have read-only repository permissions; only the deployment job has Pages write and OIDC permissions. No personal access token or external deployment service is required.
+
+### One-time repository setting
+
+In repository **Settings → Pages → Build and deployment → Source**, select **GitHub Actions**. The ordinary workflow token cannot enable a previously unconfigured Pages site. If the configuration step reports that the site is missing, set this option, then rerun failed jobs from the Actions run.
+
+The intended URL is https://chudfungis.github.io/OneMoreFlight/ . Do not call it live until the deployment succeeds and the URL is verified.
+
+### Updates and testing
+
+Merge reviewed game updates into `main`; the same import/test/export/deploy process updates the website automatically. Failed tests or exports prevent deployment. Keep the game name and local storage paths stable to preserve browser records where browser storage permits.
+
+Download the complete website artifact from a successful Actions run to test locally. Extract the whole ZIP and serve it over HTTP, for example `python3 -m http.server 8000 --directory /path/to/extracted-artifact`. Do not open `index.html` using `file://`. The artifact includes `build-commit.txt` identifying the source revision.
+
+Before wider sharing, check mobile Safari and Android Chrome: launch, rapid taps, nested suitcase scrolling, choices, safe areas, address-bar resizing, rotation, tab switching/pause and a complete run. Verify bundled Baloo text, decorative symbols and every illustration at the actual `/OneMoreFlight/` URL. Reload and close/reopen the browser to check completed records/settings. The home heart intentionally starts a fresh run. Private mode, storage clearing or eviction can remove local scores.
+
+Initial build-only CI passed 10,978 checks with zero failures and produced a 10.8 MB website artifact (run 39061289621). Intentional corrupt-save recovery warnings were the only warnings in that run. Physical-device/browser persistence validation remains outstanding.
