@@ -1,18 +1,18 @@
 # One More Flight
 
-A mobile-first, romantic incremental roguelike clicker about Dani’s Monterrey spa, Josh, and three trips that bring them closer. Built with Godot 4 / typed GDScript, no plugins or third-party dependencies. Compatibility rendering supports Intel Macs and the intended Web build.
+A mobile-first, romantic incremental roguelike clicker about Dany’s Monterrey spa, Josh, and three trips that bring them closer. Built with Godot 4 / typed GDScript, no plugins or third-party dependencies. Compatibility rendering supports Intel Macs and the intended Web build.
 
 ## Play
 
 Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait reference size is 390 × 844; smaller screens scroll. All actions use touch/mouse controls.
 
-1. New Game begins the Denver chapter. Continue restores the saved decision or remaining workday time. Starting over requires confirmation.
-2. Begin a 15-second workday and tap the big spa button. Money is both upgrade currency and travel savings.
-3. After each workday, choose among three random upgrades, buy any you can afford, or keep your savings. Every third workday has a 40% chance of an event.
-4. Buy the trip between workdays when you can afford it. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
+1. Tap the home-screen heart to start a fresh adventure in Denver immediately. Your best completed adventure and five recent results stay saved. Results and Settings are the small controls below the heart.
+2. A 10-second workday starts automatically after a brief transition. Tap the large pixel heart. Abilities can extend it to 16 seconds. Reaching the flight goal ends the workday immediately. Money is travel savings.
+3. After each below-goal workday, highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every third completed chapter day below the goal then presents one event with two beneficial choices. After decisions, the next workday begins automatically.
+4. Reach the savings milestone to enter the reunion story automatically on the goal-reaching tap or passive payout (or after end-of-day interest), skipping that day’s reward/event choices. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay, and the next chapter’s first workday begins automatically.
 5. Complete Denver, Italy, and the final one-way ticket to reach the ending.
 
-Pause / Save freezes work; Settings and Main Menu remain available. Losing application focus pauses the campaign. The game saves after decisions, when pausing, and every two seconds of active work. No offline earnings or real-money purchases. Audio buses/settings are retained; this version intentionally has no soundtrack.
+Pause / Save freezes work; Settings and Main Menu remain available. Losing application focus pauses the campaign. The game saves after decisions, when pausing, and every two seconds of active work. No offline earnings or real-money purchases. Reduced motion is available in Settings. Audio buses/settings are retained; this version intentionally has no soundtrack.
 
 ## Project map
 
@@ -36,8 +36,12 @@ From the project directory:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . tests/test_foundation.tscn
 ```
 
-Use `godot` instead of the application path if installed on PATH. The suite uses a separate `/tmp/one_more_flight_tests.json`, removes it afterward, and never overwrites a player save. Run one test instance at a time. A corrupt-save recovery warning is intentional. Graphical tests can be run by removing `--headless`.
+Use `godot` instead of the application path if installed on PATH. The suite uses a separate `/tmp/one_more_flight_tests.json`, removes it afterward, and never overwrites a player save. Tests also isolate results at `/tmp/one_more_flight_results_tests.json` and motion preferences in a separate temporary file. Run one test instance at a time. A corrupt-save recovery warning is intentional. Graphical tests can be run by removing `--headless`.
 
-Local saves use `user://save_data.json`, normally `~/Library/Application Support/Godot/app_userdata/One More Flight/` on macOS. Saves stay on the device/browser. The original prototype’s empty progression envelope is not a campaign save; Continue appears only for a versioned campaign.
+Active saves use `user://save_data.json`, normally `~/Library/Application Support/Godot/app_userdata/One More Flight/` on macOS. Saves stay on the device/browser. The home screen always opens first and never resumes unfinished progress. Its heart resets active progression; local completed-run records live separately in `user://results.json`. Lowest total workdays wins, with tied scores treated equally.
 
 Read [architecture](docs/ARCHITECTURE.md), [content and balance](docs/GAME_DESIGN.md), [art replacement](docs/ARTWORK.md), [Web export](docs/WEB_EXPORT.md), and [validation](docs/VALIDATION.md).
+
+The gameplay collection lives in an icon-only travel suitcase; tap a packed item to inspect its level and exact effect. Larger collections scroll within the compact case.
+
+The v0.4 Cozy Pixel Arcade presentation bundles Baloo 2 locally (license in assets/fonts), shared tactile controls and crisp pixel icons. Colors, frames, button depth and typography roles are centralized in `scripts/ui/flight_style.gd`; see [UI design](docs/UI_DESIGN.md) for customization.

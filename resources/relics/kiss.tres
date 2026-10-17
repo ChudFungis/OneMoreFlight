@@ -4,7 +4,6 @@
 script = ExtResource("1")
 id = "kiss"
 title = "Goodbye Kiss"
-description = "Start each new chapter with Extra Spa Appointment for free."
+description = "One last kiss before the next flight. It gives you a head start.\nBegin each new chapter with one free level of Gringo Influence."
 effect = "free_upgrade"
 amount = 1
-price = 0

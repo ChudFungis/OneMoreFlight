@@ -3,8 +3,7 @@
 [resource]
 script = ExtResource("1")
 id = "bracelet"
-title = "Matching Bracelets"
-description = "All earnings increase 15%; also strengthens passive income."
+title = "Matching Underwear"
+description = "It is not subtle, but it is definitely matching. Love boosts every workday.\n+15% to eligible earnings while owned."
 effect = "all_income"
 amount = 0.15
-price = 0

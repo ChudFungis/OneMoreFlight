@@ -4,7 +4,8 @@
 script = ExtResource("1")
 id = "cabrito"
 title = "Cabrito Power"
-description = "Double earnings for the next 20 taps. Rebuy to refill."
+description = "One plate of cabrito and suddenly anything is possible.\n2× regular tap earnings for next 20 taps; charges stack, max 60."
 effect = "burst"
 amount = 20
-price = 65
+max_level = 0
+price = 0

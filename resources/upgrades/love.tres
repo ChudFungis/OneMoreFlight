@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "love"
-title = "Long-Distance Love"
-description = "Rapid taps build a combo: up to +60% earnings."
+title = "Nicky Mode"
+description = "Nicky Mode activated. Every rapid tap makes the obsession stronger.\n+10% per combo step per level, maximum +90% overall; max 3 levels."
 effect = "combo"
 amount = 0.1
-price = 90
+max_level = 3
+price = 0

@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "viral"
-title = "Monterrey Loves Your Spa"
-description = "A lovely review brings a 55-tap bonus."
+title = "Un Chico Serio"
+description = "Dany's family calls Josh 'un chico serio.' Meanwhile, he's wearing sunglasses indoors and debating domino rules.\nVery serious: +12 base-tap equivalents; Tell the truth: +20 double-earnings tap charges."
+choice = "Very serious"
 effect = "gift"
-amount = 55
-negative = false
-alternative = ""
-alternative_effect = ""
-alternative_amount = 0
+amount = 12
+alternative = "Tell the truth"
+alternative_effect = "burst"
+alternative_amount = 20
 price = 0
+negative = false

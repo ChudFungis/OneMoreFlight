@@ -2,3 +2,6 @@
 .godot/
 .DS_Store
 /android/
+
+# Generated website; source stays in this repository.
+/build/

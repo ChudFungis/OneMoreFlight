@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "gift"
-title = "Abuela’s Secret Envelope"
-description = "“For the flight. Don’t tell your tío.” Receive 40 base taps."
+title = "The Language Barrier"
+description = "Josh confidently says something in Spanish. It means absolutely nothing like what he intended.\nHelp Josh: +10 base-tap equivalents; Let him double down: +16 double-earnings tap charges."
+choice = "Help Josh"
 effect = "gift"
-amount = 40
-negative = false
-alternative = ""
-alternative_effect = ""
-alternative_amount = 0
+amount = 10
+alternative = "Let him double down"
+alternative_effect = "burst"
+alternative_amount = 16
 price = 0
+negative = false

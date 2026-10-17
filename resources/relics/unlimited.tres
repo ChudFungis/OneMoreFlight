@@ -4,7 +4,6 @@
 script = ExtResource("1")
 id = "unlimited"
 title = "Unlimited FaceTime"
-description = "Every tenth tap adds 6 base taps; stacks with FaceTime Date."
+description = "When one call ends, the next one is already starting.\n+6 base-tap equivalents on every 10th tap."
 effect = "tenth"
 amount = 6
-price = 0

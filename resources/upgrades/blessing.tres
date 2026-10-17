@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "blessing"
-title = "Abuela’s Blessing"
-description = "Block one negative event per purchase."
-effect = "shield"
-amount = 1
-price = 45
+title = "Jake's Protection"
+description = "Jake is somehow looking out for Dany. Whenever an event happens, his questionable loyalty makes the bonus even sweeter.\n+25% beneficial event payout per level (cash gifts or burst charges), max 2 levels."
+effect = "event_bonus"
+amount = 0.25
+max_level = 2
+price = 0

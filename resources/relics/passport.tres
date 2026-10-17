@@ -4,7 +4,6 @@
 script = ExtResource("1")
 id = "passport"
 title = "Heart-Stamped Passport"
-description = "All future travel goals cost 12% less."
+description = "Every stamp is one flight closer to being together.\n-12% future travel goals while owned."
 effect = "discount"
 amount = 0.12
-price = 0

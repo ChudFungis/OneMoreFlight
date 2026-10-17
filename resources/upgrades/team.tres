@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "team"
-title = "Spa Besties"
-description = "Passive income is 50% stronger; receive 12 base taps now."
-effect = "team"
-amount = 0.5
-price = 85
+title = "Girls’ Night Boost"
+description = "A night out with the girls gives Dany the encouragement to keep going a little longer.\n+2 seconds per level; max 2 levels (+4 seconds), subject to the shared +6-second extension cap."
+effect = "time"
+amount = 2
+max_level = 2
+price = 0

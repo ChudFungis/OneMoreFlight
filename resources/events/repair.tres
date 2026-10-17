@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "repair"
-title = "The Steamer Revolts"
-description = "The spa steamer demands a retirement fund. Lose 18% of savings."
-effect = "loss"
-amount = 0.18
-negative = true
-alternative = ""
-alternative_effect = ""
-alternative_amount = 0
+title = "Fede's Shopping List"
+description = "Fede heard you're coming from Mexico. His 'small' shopping list is 47 items long... and he's still typing.\nBring everything: +25 double-earnings tap charges; Tell Fede no: +6 base-tap equivalents."
+choice = "Bring everything"
+effect = "burst"
+amount = 25
+alternative = "Tell Fede no"
+alternative_effect = "gift"
+alternative_amount = 6
 price = 0
+negative = false

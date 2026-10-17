@@ -4,9 +4,11 @@ const SAVE_PATH := "user://save_data.json"
 var settings: Dictionary = {"music_volume": 0.8, "sfx_volume": 0.8, "fullscreen": false}
 var progression: Dictionary = {}
 var save_path: String = SAVE_PATH
+var results := FlightResults.new()
 
 func _ready() -> void:
 	load_data()
+	results.load_data()
 
 func load_data() -> void:
 	if not FileAccess.file_exists(save_path):

@@ -1,83 +1,67 @@
-# One More Flight — content and tuning
+# One More Flight — content and tuning (v0.3.3 flow)
 
-Dani runs her spa in Monterrey to fund Denver, Italy, then a permanent move to the United States to be with Josh. Chapter illustrations and affectionate prose are placeholders. Money uses fictional dollar units; the economy is entertainment, not real travel pricing.
+The three chapters, story, artwork paths, ordinary-upgrade resets and permanent relics remain. The source is `One_More_Flight_Final_Codex_Spec.xlsx` (all five sheets reviewed). Economy & Mechanics records v0.1; it does not override the proposed content or confirmed rules. All existing content IDs are retained.
 
-## Initial economy
+## Rules and provisional tuning
 
-Edit `resources/balance.tres` in the Inspector; defaults are declared in `scripts/data/flight_balance.gd`.
+Confirmed rules: 10-second base workdays; one free reward per below-goal completed workday; three unique viable choices when available; 65% new / 35% owned level-up selection independently for each card, conditional on remaining candidates; exactly one event on below-goal chapter days 3, 6, 9, etc.; no event penalties or ordinary upgrade costs. Savings now act as milestones, without a manual ticket purchase. Events avoid consecutive repeats within a chapter.
 
-| Parameter | Default |
-| --- | --- |
-| Workday | 15 seconds |
-| Base tap | $5 |
-| Chapter income scaling | 1 / 2 / 3.5 |
-| Ticket goals | $2,100 / $5,300 / $11,000 |
-| Upgrade price scaling | 1 / 2 / 3.5 |
-| Event interval / probability | Every 3 completed days / 40% |
-| Rapid-tap window | 0.6 seconds |
-| Coffee extension cap | 9 seconds |
+A workday now stops immediately when a tap or passive payout reaches the discounted goal, even with time remaining. Otherwise the timer ends it. End-of-day interest and day counts settle exactly once in either case.
 
-Per-upgrade base prices and effect amounts live in `.tres` definitions. Repeat purchase prices increase 35% per owned level. Ticket reductions compound to a floor of 50% of the ordinary goal; the Passport relic then applies its own discount. FaceTime counts every tenth shift tap; tips every seventh; playlist every fifth. Combo is capped at six taps, +120% at multiple levels; interest at 40% per workday. Playlist extension is capped at three seconds per day. These guardrails and cadence rules are explicit in GameManager.
+Order: settle work earnings and interest → check the discounted savings milestone. If reached, enter the story immediately and skip reward/event choices. Otherwise choose one reward → resolve the third-day event → automatic transition to the next workday. If a goal discount or event gift reaches the milestone after work, enter the story then. The event is selected at shift completion and saved alongside offers. Neither choice is rerolled by loading. Reward cards show NEW or the resulting LEVEL. Workday input, floating earnings, combo feedback, pause and autosave remain.
 
-Simulated seeded games buying one useful upgrade on early days:
+The owner approved these gap resolutions: a shared +6-second extension cap; Cabrito can recur below 60 charges without a level cap; music has four levels; offer fewer than three cards if necessary; advance past the reward only when no candidates exist. Time abilities that cannot increase duration because fixed extensions already fill the cap are excluded.
 
-| Taps/sec | Denver / Italy / Future days | Active work |
+Proposed names and numeric balance values are implemented for testing, not promoted to final balance decisions. In particular, Volaris Red-Eye and Girls’ Night Boost remain provisional names. The v0.3.3 owner direction supersedes the workbook’s earlier two-day cadence; events now occur every third completed chapter day, with no probability roll. Final positive event choices override stale gamble/loss notes. No random-outcome or loss handler is needed.
+
+Tune amounts and levels in `resources/upgrades/*.tres`, events and relics in their matching folders, and shared timing/weight values in `resources/balance.tres`. Story prose stays in `resources/story.tres`.
+
+| Stable ID | Upgrade | Effect / maximum |
 | --- | --- | --- |
-| 2 | 6 / 8 / 9 | 369 s |
-| 3 | 5 / 6 / 5 | 240 s |
-| 4 | 4 / 4 / 5 | 195 s |
+| appointment | Gringo Influence | +25% regular tap income/level; 4 levels |
+| blessing | Jake's Protection | +25% event gift or burst charge payout/level; 2 levels |
+| cabrito | Cabrito Power | Refill 20 double-earnings regular taps; 60 shared charges |
+| cafecito | Jake Wants Meat | +2 seconds/day/level; 2 levels |
+| empire | CEO | +1 base-tap equivalent/sec/level during work; 3 levels |
+| facetime | FaceTime Date | +8 base taps every tenth tap/level; 3 levels |
+| flights | Volaris Red-Eye | Current ticket multiplier ×0.92/selection; 2 selections/chapter |
+| jar | Passive Income Princess | +2% savings interest/level at day end; 3 levels, 6% cap |
+| love | Nicky Mode | +10% per rapid combo step/level; 3 levels, +90% overall cap |
+| playlist | Carín León on Repeat | +0.5 seconds every fifth tap/level; 4 levels, +2 seconds/day |
+| tips | One Wish Willow | +5 base taps every seventh tap/level; 3 levels |
+| team | Girls’ Night Boost | +2 seconds/day/level; 2 levels; replaces old passive multiplier and immediate gift |
 
-The initial **10–15 minute session target** includes reading, upgrade comparison, events and illustrated scenes, with roughly 20 seconds of decisions per workday. It is not a measured human playtime result. A fast player skipping text can finish sooner. Fifteen-second shifts and only 5–7 days/chapter inherently provide about 4–6 minutes of active tapping; no forced wait was added to inflate that. Human pacing validation remains necessary. Slower tapping, random offers, optional spending and relic selection change these totals. Tune goals/scaling first after a real playtest.
+Fixed time from cafecito and team is applied first, capped at +6 seconds. Music uses the remaining shared budget, up to +2 seconds. A workday lasts 10–16 seconds. Combo uses the existing 0.6-second window and six-step counter. Interest is paid before the new reward, so a new interest level first affects the next day. Discounts compound against the current goal multiplier, retaining the old 50% floor. Passport applies its additional 12% reduction. Base tap income remains $5 with chapter scaling 1 / 2 / 3.5; goals remain $2,100 / $5,300 / $11,000.
 
-## Ordinary upgrades
-
-| ID | Upgrade | Effect | Base cost |
-| --- | --- | --- | --- |
-| cabrito | Cabrito Power | Double next 20 taps; refill by buying again | 65 |
-| facetime | FaceTime Date | Every tenth tap adds 8 base taps | 95 |
-| appointment | Extra Spa Appointment | +30% base tap income/level | 70 |
-| cafecito | Cafecito Extra Fuerte | +3 seconds/day, up to +9 | 80 |
-| empire | Spa Empire | 3 base taps/sec/level during work | 100 |
-| flights | Josh Found Cheap Flights | Current goal reduced 12% | 60 |
-| love | Long-Distance Love | Rapid consecutive tap multiplier | 90 |
-| blessing | Abuela’s Blessing | One consumable negative-event shield | 45 |
-| playlist | Monterrey Playlist | Every fifth tap extends shift by 0.15s | 75 |
-| tips | Telenovela Tips | Every seventh tap adds 5 base taps | 85 |
-| jar | Little Heart Savings Jar | 8% interest/day/level, capped | 80 |
-| team | Spa Besties | Passive +50%/level and 12 base taps immediately | 85 |
-
-Examples of interactions: Besties amplifies Empire and Postcard passive earnings. FaceTime stacks with Unlimited FaceTime. Coffee allows more passive ticks and tap milestones. Combo, appointments, Cabrito and Hoodie multiply regular tap earnings; Bracelet also amplifies milestone and passive income. Interest rewards keeping money instead of buying everything.
-
-## Relics
-
-Choose one of three unique offers after Denver and Italy. Previously selected relics are excluded. Relics do not reset.
-
-| ID | Relic | Effect |
-| --- | --- | --- |
-| hoodie | Josh’s Hoodie | First 10 taps/shift earn 50% more |
-| unlimited | Unlimited FaceTime | Every tenth tap adds 6 base taps |
-| kiss | Goodbye Kiss | Free Appointment at each new chapter start, including immediately after choosing it |
-| passport | Heart-Stamped Passport | Future tickets cost 12% less |
-| bracelet | Matching Bracelets | All work earnings +15% |
-| postcard | Monterrey Postcard | 2 base taps/sec during work |
+All work earnings and event gifts receive Matching Underwear's +15%; interest does not. Steal Josh's Clothes gives +50% on the first ten regular taps. Unlimited FaceTime adds six base taps every tenth tap. Brian Merge gives two base taps/sec during work. Goodbye Kiss grants one Gringo Influence level after each chapter reset following acquisition.
 
 ## Events
 
-All happen between workdays, before upgrades. Events cannot interrupt a shift. Protection is consumed only by an actual loss outcome, not by choosing a beneficial alternative.
+Each event has two free positive outcomes. Gifts below are base-tap equivalents; bursts are double-earnings regular-tap charges. Jake's Protection multiplies the selected amount by 1.25 or 1.5, with fractional charge counts rounded up. All burst sources share the 60-charge cap; choosing burst at capacity adds zero charges, while the cash alternative remains available. Gifts also receive the earnings relic multiplier.
 
-| ID | Event | Outcome / choice |
+| ID | Name | First choice | Second choice |
+| --- | --- | --- | --- |
+| call | Josh Is Calling... Again | Answer: gift 12 | Decline: burst 20 |
+| cancelled | Jake's Betrayal | Laugh: gift 8 | Attention: burst 15 |
+| dinner | One More Episode | Sleep: gift 8 | Watch: burst 15 |
+| gift | The Language Barrier | Help: gift 10 | Double down: burst 16 |
+| rain | The Domino Incident | Carefully: gift 8 | Dramatic play: burst 18 |
+| repair | Fede's Shopping List | Bring everything: burst 25 | Refuse: gift 6 |
+| sale | Customs Has Questions | Explain: gift 8 | Call Fede: burst 16 |
+| viral | Un Chico Serio | Serious: gift 12 | Truth: burst 20 |
+
+## Measured balance and concerns
+
+Seed 12345, selecting the first available preferred ability in order facetime/tips/love/appointment/empire/cafecito/flights, taking burst event alternatives and the first relic offer, stopping work immediately at the goal-reaching payout and completing chapters automatically at the settled milestone (winning-day choices skipped):
+
+| Taps/sec | Denver / Italy / Future days | Active work |
 | --- | --- | --- |
-| cancelled | Appointment Canceled | Lose 12% savings |
-| gift | Abuela’s Secret Envelope | +40 base taps |
-| call | Josh Is Calling | +20 base taps or double next 40 taps |
-| sale | Fare Alert! | Goal reduced 10% |
-| repair | The Steamer Revolts | Lose 18% savings |
-| viral | Monterrey Loves Your Spa | +55 base taps |
-| dinner | Tacos or Travel? | +15 base taps or spend 10% savings for Appointment |
-| rain | Rainy Day Rescue | Lose 8% savings or accept Josh’s 8-tap gift |
+| 2 | 7 / 8 / 8 | 217.5 s |
+| 3 | 6 / 6 / 7 | 175.3 s |
+| 4 | 5 / 5 / 6 | 143.8 s |
 
-`negative` describes the default event for content editing; protection is resolved from the selected `loss` effect so choice-based events behave correctly.
+These accelerated simulations use the real rules; they do not measure human 10–15 minute session pacing. Later chapters at faster tapping rates fall below provisional 7–9 / 9–12 day targets. Milestone rewards plus permanent relics produce substantial scaling despite lower passive income and interest. Goals have deliberately not been retuned. The shared time cap makes some time builds mutually redundant; exclusion avoids offering fully ineffective additional time levels. Cabrito level labels count acquisitions, while its effect remains a fixed refill. Human testing and additional seeds are needed before locking balance.
 
-## Future product decisions
+Automatic milestone validation retains the same goals and effects. The changed seeded results reflect the three-day event cadence and skipped winning-day choices changing subsequent RNG consumption; they are not a balance retune. Human playtime remains unmeasured.
 
-Personalized artwork and final prose, soundtrack, accessibility options, actual device playtime feedback, and any content beyond the three chapters remain open. There is no combat, character death, paid economy, or offline production in this design. The roguelike structure comes from random upgrades/events and persistent keepsakes across chapter resets.
+The overview/start button is removed from ordinary and chapter-start flow. A 0.4-second input-safe transition displays the existing heart before the workday clock starts. This delay is not counted as tapping time or workdays.

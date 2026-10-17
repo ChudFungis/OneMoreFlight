@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "tips"
-title = "Telenovela Tips"
-description = "Every seventh tap earns 5 extra base taps."
-effect = "seventh"
+title = "One Wish Willow"
+description = "One Wish Willow has granted another tiny wish. It might be getting out of hand.\n+5 base-tap equivalents each 7th tap per level; max 3 levels."
+effect = "tips"
 amount = 5
-price = 85
+max_level = 3
+price = 0
