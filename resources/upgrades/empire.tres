@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "empire"
-title = "Spa Empire"
-description = "Earn 3 base taps per second during work."
+title = "CEO"
+description = "You are the CEO now. Other people do the work while you supervise.\n+1 base-tap equivalent per second per level; maximum 3 levels."
 effect = "passive"
-amount = 3
-price = 100
+amount = 1
+max_level = 3
+price = 0

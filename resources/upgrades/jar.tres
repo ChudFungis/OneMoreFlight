@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "jar"
-title = "Little Heart Savings Jar"
-description = "Earn 8% interest on saved money at shift end."
+title = "Passive Income Princess"
+description = "Passive Income Princess does not work harder. Her savings do.\n+2% interest per level at day-end; max 3 levels (+6%)."
 effect = "interest"
-amount = 0.08
-price = 80
+amount = 0.02
+max_level = 3
+price = 0

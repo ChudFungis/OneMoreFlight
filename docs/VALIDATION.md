@@ -1,25 +1,28 @@
-# Validation and delivery
+# Validation and delivery — v0.2
 
-## Automated validation
+Validated with Godot 4.7.2 stable on Intel macOS and the Compatibility renderer. The final headless and graphical integration runs each report **10,253 checks, zero failures**. The editor import also completes successfully with no script/resource errors. The suite isolates SaveManager.save_path at `/tmp/one_more_flight_tests.json` before campaign actions and removes that file afterward. Player saves are not overwritten.
 
-Validated with Godot 4.7.2 stable on Intel macOS, using the Compatibility renderer. The integration suite runs actual scenes and shared economy code without external dependencies.
+Coverage includes first-time offers; owned level increases; cap exclusion and direct-grant caps; unique weighted offers and category fallback; exhausted pool progression; required reward/event ordering and no skips; no reward savings deduction; exactly one event on even chapter days and cadence reset after relic selection; no consecutive event repeats; both outcomes of all eight events and exact event amplifier calculations; shared burst cap; fixed and milestone time budgets; loaded extension budgets; passive earnings limited to actual remaining time; interest, combo timeout, tap milestones and relic synergies; pause/settings navigation; settings persistence; v0.1 migration; pending decision disk round trips; duplicate-action rejection; complete campaigns and ending Continue; corrupt-save recovery.
 
-The final suite reports **87 checks, zero failures**. Checks cover retained-script compilation inside the autoload-enabled project; base income; timer completion exactly once; pause blocking taps/time; Settings returning to Pause; purchase affordability and duplicate-offer protection; combo timeout; Cabrito charge consumption; FaceTime + relic and passive-income synergies; playlist extension; coffee duration; interest; ticket/Passport discounts; Hoodie/Bracelet stacking; seventh-tap tips; audio-settings persistence and mute; all eight events and their alternative outcomes; negative-event protection; event probability 0/1 on the third day; save/load snapshot equality with float tolerance; regular-upgrade reset; relic preservation and free-upgrade behavior; completed-save Continue; corrupt-save recovery; portrait viewport configuration; and three deterministic full campaigns at 2/3/4 taps/sec.
+The seeded 10,000-offer test chose a new ability for the first card 6,499 times (64.99%; acceptable range 63–67%). Unique-card checks run on every sample. The second and third cards use the same conditional category rule after removal; eligibility can change their available categories.
 
-Graphical runs use Intel Iris Plus OpenGL Compatibility. Gameplay and final-ending screenshots were rendered at 390 × 844 and visually inspected for contrast, wrapping and touch-target layout. Long ending text scrolls. A single warning from deliberately invalid JSON is expected during the recovery test. No personalized art or audio is required.
+Full campaigns at 2/3/4 taps per second complete in 7/9/9, 5/5/7 and 5/5/6 chapter days respectively. Active work totals are 252/170/160 seconds. These accelerated results test reachability, not human session duration. See GAME_DESIGN.md for policy and balance limitations.
 
-Tests save only to `/tmp/one_more_flight_tests.json`. They never replace a player save. Automated simulations advance the same timer function as real gameplay without waiting for wall-clock workdays. This validates rules and reachability, not actual human session duration.
+## Graphical checks
 
-## Manual checks still required
+The graphical suite ran successfully on Intel Iris Plus OpenGL Compatibility. Reward and event screens were captured and visually inspected at physical widths 390, 360 (configured minimum) and 320 (additional scaled stress check), all 844 pixels tall. Text wraps, NEW/LEVEL badges are visible, long rewards scroll to the final card and Pause/Save, and gameplay retains the existing large tapping button. Logical button heights are checked at >=52 pixels; a 320-wide scaled window does not establish a physical mobile touch target guarantee. Existing artwork, theme and layout structure are preserved. Screenshots are temporary QA artifacts in `/tmp/omf_*` and `/tmp/one_more_flight_*`, not game assets.
 
-- Human click-through of New Game confirmation, all menus, scrolling upgrade/relic choices, pause, and Settings.
-- iPhone Safari touch input, fast taps versus page scrolling, safe areas, orientation and browser address-bar resizing.
-- Web export and browser-storage reload/close/reopen behavior. Export templates are not installed here; follow WEB_EXPORT.md.
-- Real playtime at a comfortable tapping rate. Tune toward 10–15 minutes including decisions/story; fast simulated active tapping is shorter.
-- Your replacement illustrations on the smallest supported portrait viewport.
+The intentional invalid-JSON test emits one recovery warning. Initial sandbox runs also logged macOS certificate/editor-settings access errors; the final desktop-permitted import and graphical run do not show those errors. The restricted headless test still reports the platform certificate-access error, unrelated to this offline gameplay. No script errors or test failures remain.
 
-## Commit handoff
+## Outstanding manual checks
 
-The repository began with untracked project/editor files. `.gitignore`, `.gitattributes` and VS Code setup have been retained. Review the whole initial project before committing; include `.gd.uid` and imported asset `.import` metadata but not the ignored `.godot/` cache. No commit, push, publication or deployment was performed.
+- Human click-through and comfortable tapping playtime, especially later chapters and shared-cap time builds.
+- iPhone Safari and Android browser touch input, rapid taps versus scrolling, safe areas, orientation and address-bar resizing.
+- Web export and browser-storage close/reopen behavior. Desktop Compatibility validation does not establish browser or physical-device behavior; follow WEB_EXPORT.md.
+- More RNG seeds and reward strategies before finalizing provisional values or adjusting travel goals.
 
-Suggested commit message: `Build One More Flight campaign, mobile UI, content resources, and integration tests`.
+## Delivery
+
+Feature branch: `feature/v0.2-gameplay-redesign`. The existing `v0.1-playable` tag is preserved at `d1702a14347445bb16b6173256fe265f80f5e8c3`. The pre-existing untracked `design/` directory is excluded from the implementation commit. No UI redesign, illustration replacement, push, publication or deployment is included.
+
+Commit summary: implement v0.2 free weighted rewards, guaranteed positive events, bounded workday extensions, proposed content, compatible saves, simulations and portrait validation.

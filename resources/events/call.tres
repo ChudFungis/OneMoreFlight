@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "call"
-title = "Josh Is Calling"
-description = "Answer for a 20-tap gift, or stay focused for 40 boosted taps."
+title = "Josh Is Calling... Again"
+description = "Josh was just calling to say hi. Somehow, it's been 47 minutes.\nAnswer: +12 base-tap equivalents; Decline: +20 double-earnings tap charges."
+choice = "Answer, obviously ♡"
 effect = "gift"
-amount = 20
-negative = false
-alternative = "Stay focused: boost 40 taps"
+amount = 12
+alternative = "Decline. Girl’s gotta work."
 alternative_effect = "burst"
-alternative_amount = 40
+alternative_amount = 20
 price = 0
+negative = false

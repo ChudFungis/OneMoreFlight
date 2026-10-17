@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "sale"
-title = "Fare Alert!"
-description = "Josh has 47 flight tabs open. Your ticket is 10% cheaper."
-effect = "discount"
-amount = 0.1
-negative = false
-alternative = ""
-alternative_effect = ""
-alternative_amount = 0
+title = "Customs Has Questions"
+description = "Customs opens the suitcase: 14 suspiciously identical snacks, Fede's entire list, and a nervous Josh.\nExplain what's inside: +8 base-tap equivalents; Call Fede: +16 double-earnings tap charges."
+choice = "Explain what’s inside"
+effect = "gift"
+amount = 8
+alternative = "Call Fede"
+alternative_effect = "burst"
+alternative_amount = 16
 price = 0
+negative = false

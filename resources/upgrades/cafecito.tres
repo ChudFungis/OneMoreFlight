@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "cafecito"
-title = "Cafecito Extra Fuerte"
-description = "Workdays last 3 seconds longer (maximum +9)."
-effect = "duration"
-amount = 3
-price = 80
+title = "Jake Wants Meat"
+description = "Jake is dreaming of forbidden steak. Determination keeps the shift going.\n+2 seconds per level; max 2 levels (+4s). Shared cap with music: +6 seconds overall."
+effect = "time"
+amount = 2
+max_level = 2
+price = 0

@@ -182,7 +182,8 @@ func close() -> void:
 		show_notice("Couldn’t save. Please try again before closing.")
 
 func build_game() -> void:
-	label_text("CHAPTER %d / 3  ·  DAY %d" % [GameManager.chapter + 1, GameManager.days + 1], 14, Color("bd436b"))
+	var shown_day := GameManager.days if GameManager.phase in ["upgrades", "event"] else GameManager.days + 1
+	label_text("CHAPTER %d / 3  ·  DAY %d" % [GameManager.chapter + 1, shown_day], 14, Color("bd436b"))
 	label_text(GameManager.CHAPTERS[GameManager.chapter], 27)
 	label_text(GameManager.DESTINATIONS[GameManager.chapter], 16)
 	if GameManager.phase not in ["story", "relic", "ending"]:
@@ -195,7 +196,7 @@ func build_game() -> void:
 		"ready":
 			artwork("main_menu", 150)
 			label_text("Ready for work?", 25)
-			label_text("Tap to earn during a 15-second spa workday. Then choose upgrades—or keep the money for your ticket.")
+			label_text("Tap to earn during a 10-second spa workday, plus ability extensions. Then choose one free upgrade.")
 			button("Begin workday", GameManager.start_shift, true)
 			trip_button()
 		"work":
@@ -206,12 +207,11 @@ func build_game() -> void:
 			label_text("Every little tap is one little step closer.", 16)
 		"upgrades":
 			label_text("Workday %d complete!" % GameManager.days, 25)
-			label_text("Pick any you can afford. Saving your money is a strategy too.", 16)
-			trip_button()
+			label_text("Choose exactly one free reward. Your savings stay yours.", 16)
 			for id: String in GameManager.offers:
 				var item := FlightCatalog.find_item(FlightCatalog.UPGRADES, id)
-				content_card(item, "Buy · $%.0f" % GameManager.price(item), func() -> void: GameManager.buy_upgrade(id), GameManager.money < GameManager.price(item), "upgrades")
-			button("Keep savings → Next workday", GameManager.next_day, true)
+				var badge := "NEW" if GameManager.count(id) == 0 else "LEVEL %d" % (GameManager.count(id) + 1)
+				content_card(item, "%s · Choose free" % badge, func() -> void: GameManager.buy_upgrade(id), false, "upgrades")
 		"event": build_event()
 		"story": build_story()
 		"relic":
@@ -269,11 +269,9 @@ func build_event() -> void:
 	label_text("A little plot twist…", 26, Color("bd436b"))
 	label_text(event.title, 24)
 	label_text(event.description)
-	button("Accept outcome", func() -> void: GameManager.resolve_event(), true)
+	button(event.choice, func() -> void: GameManager.resolve_event(), true)
 	if not event.alternative.is_empty():
 		button(event.alternative, func() -> void: GameManager.resolve_event(true))
-	if GameManager.shields > 0:
-		label_text("Abuela’s Blessing: protected against a negative outcome.", 15)
 
 func build_story() -> void:
 	artwork(STORY.illustrations[GameManager.chapter], 280)
@@ -297,7 +295,7 @@ func refresh() -> void:
 			names.append("♡ " + FlightCatalog.find_item(FlightCatalog.RELICS, id).title)
 		bonus_label.text = "Bonuses: " + (", ".join(names) if not names.is_empty() else "A fresh start and a big dream.")
 		if GameManager.phase == "work":
-			bonus_label.text += "\nCombo %d · Boosted taps %d · Shields %d" % [GameManager.combo, GameManager.burst_clicks, GameManager.shields]
+			bonus_label.text += "\nCombo %d · Boosted taps %d" % [GameManager.combo, GameManager.burst_clicks]
 	if GameManager.save_error and is_instance_valid(toast):
 		toast.text = "Save unavailable. Keep this tab open and try Pause / Save again."
 

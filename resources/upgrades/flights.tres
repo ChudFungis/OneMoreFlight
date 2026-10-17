@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "flights"
-title = "Josh Found Cheap Flights"
-description = "Reduce this chapter’s current ticket price by 12%."
+title = "Volaris Red-Eye"
+description = "A suspiciously cheap red-eye on Volaris. Sleep is optional, savings are not.\n-8% of remaining travel goal multiplier per level; max 2 selections per chapter."
 effect = "discount"
-amount = 0.12
-price = 60
+amount = 0.08
+max_level = 2
+price = 0

@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "appointment"
-title = "Extra Spa Appointment"
-description = "Each tap earns 30% more base income."
+title = "Gringo Influence"
+description = "Josh’s gringo influence is rubbing off on Dani. Every tap gets a little more ridiculous.\n+25% regular tap income per level; maximum 4 levels."
 effect = "click"
-amount = 0.3
-price = 70
+amount = 0.25
+max_level = 4
+price = 0

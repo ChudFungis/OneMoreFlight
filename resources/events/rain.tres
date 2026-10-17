@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "rain"
-title = "Rainy Day Rescue"
-description = "A slow day costs 8% of savings, or Josh sends a small 8-tap pick-me-up."
-effect = "loss"
-amount = 0.08
-negative = true
-alternative = "Accept Josh’s pick-me-up"
-alternative_effect = "gift"
-alternative_amount = 8
+title = "The Domino Incident"
+description = "A family domino game has become unexpectedly competitive.\nPlay carefully: +8 base-tap equivalents; Make a dramatic play: +18 double-earnings tap charges."
+choice = "Play carefully"
+effect = "gift"
+amount = 8
+alternative = "Make a dramatic play"
+alternative_effect = "burst"
+alternative_amount = 18
 price = 0
+negative = false

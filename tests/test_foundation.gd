@@ -33,7 +33,7 @@ func run_checks() -> void:
 	GameManager.new_game()
 	check(GameManager.phase == "ready" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
-	check(is_equal_approx(GameManager.remaining, 15), "Shift length incorrect")
+	check(is_equal_approx(GameManager.remaining, 10), "Shift length incorrect")
 	check(is_equal_approx(GameManager.tap(), 5), "Base income incorrect")
 	SceneManager.pause_run()
 	var before := GameManager.remaining
@@ -57,21 +57,21 @@ func run_checks() -> void:
 	GameManager.apply_upgrade(item("appointment"))
 	GameManager.combo = 5
 	GameManager.since_tap = 0.1
-	check(is_equal_approx(GameManager.tap(), 10.4), "Combo / appointment synergy failed")
+	check(is_equal_approx(GameManager.tap(), 10.0), "Combo / appointment synergy failed")
 	GameManager.since_tap = 2
-	check(is_equal_approx(GameManager.tap(), 7.15), "Combo did not reset after delay")
+	check(is_equal_approx(GameManager.tap(), 6.875), "Combo did not reset after delay")
 	GameManager.upgrades = {}
 	GameManager.money = 0
 	GameManager.apply_upgrade(item("empire"))
 	GameManager.apply_upgrade(item("team"))
 	GameManager.money = 0
 	GameManager.advance_time(1)
-	check(is_equal_approx(GameManager.money, 22.5), "Passive / besties synergy failed")
+	check(is_equal_approx(GameManager.money, 5), "Passive / besties synergy failed")
 	GameManager.apply_upgrade(item("playlist"))
 	GameManager.shift_clicks = 4
 	before = GameManager.remaining
 	GameManager.tap()
-	check(is_equal_approx(GameManager.remaining, before + 0.15), "Playlist extension failed")
+	check(is_equal_approx(GameManager.remaining, before + 0.5), "Playlist extension failed")
 	GameManager.upgrades = {}
 	GameManager.remaining = 0.1
 	GameManager.advance_time(0.1)
@@ -80,22 +80,26 @@ func run_checks() -> void:
 	check(GameManager.days == 1, "Timer completed twice")
 	check(GameManager.offers.size() == 3, "Expected 3 upgrade offers")
 	GameManager.money = 0
-	check(not GameManager.buy_upgrade(GameManager.offers[0]), "Unaffordable purchase accepted")
+	check(not GameManager.buy_trip(), "Travel bypassed mandatory reward")
+	GameManager.next_day()
+	check(GameManager.phase == "upgrades", "Reward could be skipped")
 	GameManager.money = 1000
+	var reward_money := GameManager.money
 	var id: String = GameManager.offers[0]
 	check(GameManager.buy_upgrade(id) and GameManager.count(id) > 0, "Purchase failed")
 	check(not GameManager.buy_upgrade(id), "Offer purchased twice")
+	check(GameManager.money == reward_money, "Free reward changed savings")
 	GameManager.upgrades = {}
 	GameManager.burst_clicks = 0
 	GameManager.goal_multiplier = 1
 	GameManager.phase = "ready"
 	GameManager.apply_upgrade(item("cafecito"))
 	GameManager.start_shift()
-	check(is_equal_approx(GameManager.remaining, 18), "Coffee duration failed")
+	check(is_equal_approx(GameManager.remaining, 12), "Coffee duration failed")
 	GameManager.apply_upgrade(item("flights"))
-	check(is_equal_approx(GameManager.goal(), 2100 * 0.88), "Ticket discount failed")
+	check(is_equal_approx(GameManager.goal(), 2100 * 0.92), "Ticket discount failed")
 	GameManager.relics = ["passport"]
-	check(is_equal_approx(GameManager.goal(), 2100 * 0.88 * 0.88), "Passport discount synergy failed")
+	check(is_equal_approx(GameManager.goal(), 2100 * 0.92 * 0.88), "Passport discount synergy failed")
 	GameManager.relics = ["hoodie", "bracelet"]
 	GameManager.shift_clicks = 0
 	check(is_equal_approx(GameManager.tap(), 5 * 1.5 * 1.15), "Hoodie / bracelet earnings failed")
@@ -107,7 +111,7 @@ func run_checks() -> void:
 	GameManager.apply_upgrade(item("jar"))
 	GameManager.money = 100
 	GameManager.finish_shift()
-	check(is_equal_approx(GameManager.money, 108), "Interest failed")
+	check(is_equal_approx(GameManager.money, 102), "Interest failed")
 	GameManager.phase = "ready"
 	GameManager.money = 0
 	check(not GameManager.buy_trip(), "Unaffordable trip accepted")
@@ -126,26 +130,8 @@ func run_checks() -> void:
 			GameManager.event_id = event.id
 			GameManager.money = 1000
 			GameManager.resolve_event(alternate)
-			check(GameManager.phase == "upgrades" and GameManager.money >= 0, "Event failed: " + event.id)
-	GameManager.phase = "event"
-	GameManager.event_id = "cancelled"
-	GameManager.money = 1000
-	GameManager.shields = 1
-	GameManager.resolve_event()
-	check(GameManager.money == 1000 and GameManager.shields == 0, "Shield failed")
-	var balance: FlightBalance = GameManager.balance
-	var old_probability: float = balance.event_probability
-	balance.event_probability = 1
-	GameManager.phase = "work"
-	GameManager.days = 2
-	GameManager.finish_shift()
-	check(GameManager.phase == "event", "Third-day event roll missing")
-	balance.event_probability = 0
-	GameManager.phase = "work"
-	GameManager.days = 5
-	GameManager.finish_shift()
-	check(GameManager.phase == "upgrades", "Event probability zero ignored")
-	balance.event_probability = old_probability
+			check(GameManager.phase == "ready" and GameManager.money >= 1000, "Event failed: " + event.id)
+	await check_redesign()
 	# Save/load preserves the exact decision and offers, not just a chapter index.
 	GameManager.phase = "relic"
 	GameManager.offers = ["kiss", "hoodie", "passport"]
@@ -164,6 +150,15 @@ func run_checks() -> void:
 	GameManager.choose_relic("kiss")
 	check(GameManager.chapter == 1 and GameManager.money == 0 and GameManager.relics.has("kiss"), "Relic transition failed")
 	check(GameManager.upgrades.size() == 1 and GameManager.count("appointment") == 1, "Ordinary upgrade reset / free-upgrade relic failed")
+	check(GameManager.days == 0 and GameManager.last_event_id == "", "Chapter event schedule did not reset")
+	for day: int in [1, 2]:
+		GameManager.start_shift()
+		GameManager.advance_time(100)
+		GameManager.buy_upgrade(GameManager.offers[0])
+		check(GameManager.phase == ("event" if day == 2 else "ready"), "New chapter event cadence failed")
+		if day == 2:
+			GameManager.resolve_event()
+	await capture_decisions()
 	# Deterministic complete games at different tapping rates, using real timers/income.
 	for rate: int in [2, 3, 4]:
 		await simulate_game(rate)
@@ -202,26 +197,193 @@ func simulate_game(rate: int) -> void:
 	while GameManager.phase != "ending" and guard < 150:
 		guard += 1
 		match GameManager.phase:
-			"ready": GameManager.start_shift()
-			"work":
-				while GameManager.phase == "work":
-					GameManager.tap()
-					GameManager.advance_time(1.0 / rate)
-					work_seconds += 1.0 / rate
-			"event": GameManager.resolve_event(true)
-			"upgrades":
+			"ready":
 				if GameManager.money >= GameManager.goal():
 					chapter_days.append(GameManager.days)
 					check(GameManager.buy_trip(), "Earned trip could not be purchased")
 				else:
-					# Purchase at most one useful upgrade/day; keep savings late in chapter.
-					if GameManager.days <= 4:
-						for preferred: String in ["empire", "facetime", "love", "appointment", "tips", "cafecito", "flights"]:
-							if preferred in GameManager.offers and GameManager.buy_upgrade(preferred):
-								break
-					GameManager.next_day()
+					GameManager.start_shift()
+			"work":
+				while GameManager.phase == "work":
+					GameManager.tap()
+					var before_step := GameManager.remaining
+					GameManager.advance_time(1.0 / rate)
+					work_seconds += minf(1.0 / rate, before_step)
+			"event": GameManager.resolve_event(true)
+			"upgrades":
+				var chosen: String = GameManager.offers[0]
+				for preferred: String in ["facetime", "tips", "love", "appointment", "empire", "cafecito", "flights"]:
+					if preferred in GameManager.offers:
+						chosen = preferred
+						break
+				check(GameManager.buy_upgrade(chosen), "Required reward failed in simulation")
 			"story": GameManager.finish_story()
 			"relic": GameManager.choose_relic(GameManager.offers[0])
 		await get_tree().process_frame
 	check(GameManager.complete and GameManager.completed_chapters.size() == 3 and GameManager.relics.size() == 2, "Full game not reachable at %d taps/sec" % rate)
 	print("Balance simulation %d taps/sec: days %s, working %.1fs" % [rate, chapter_days, work_seconds])
+
+func check_redesign() -> void:
+	GameManager.new_game()
+	GameManager.rng.seed = 90210
+	var first := GameManager.upgrade_offers()
+	check(first.size() == 3, "First player needs three new choices")
+	for id: String in first:
+		check(GameManager.count(id) == 0, "First offer is not new")
+	GameManager.apply_upgrade(item("appointment"))
+	GameManager.phase = "upgrades"
+	GameManager.offers = ["appointment"]
+	check(GameManager.buy_upgrade("appointment") and GameManager.count("appointment") == 2, "Owned ability did not level")
+	GameManager.apply_upgrade(item("appointment"))
+	GameManager.apply_upgrade(item("appointment"))
+	check(not GameManager.eligible_upgrade(item("appointment")), "Maximum level still eligible")
+	GameManager.apply_upgrade(item("appointment"))
+	check(GameManager.count("appointment") == 4, "Direct grants exceeded cap")
+	GameManager.upgrades = {"appointment": 1, "facetime": 1, "tips": 1}
+	var fresh_count := 0
+	for trial: int in range(10000):
+		var offer := GameManager.upgrade_offers()
+		if GameManager.count(offer[0]) == 0:
+			fresh_count += 1
+		check(offer.size() == 3 and offer[0] != offer[1] and offer[1] != offer[2] and offer[0] != offer[2], "Duplicate offer")
+	check(fresh_count > 6300 and fresh_count < 6700, "65/35 category weighting outside tolerance")
+	print("New-category first-card frequency: %d/10000" % fresh_count)
+	GameManager.upgrades = {}
+	for definition: FlightDefinition in FlightCatalog.UPGRADES:
+		GameManager.upgrades[definition.id] = definition.max_level
+	GameManager.burst_clicks = 60
+	check(GameManager.upgrade_offers().is_empty(), "Exhausted rewards still offered")
+	GameManager.phase = "work"
+	GameManager.days = 1
+	GameManager.finish_shift()
+	check(GameManager.phase == "event", "Exhausted rewards blocked required event")
+	GameManager.resolve_event()
+	GameManager.burst_clicks = 40
+	check(GameManager.upgrade_offers() == ["cabrito"], "Single-category fallback failed")
+	GameManager.apply_upgrade(item("cabrito"))
+	check(GameManager.burst_clicks == 60, "Burst charge cap failed")
+	GameManager.upgrades = {}
+	GameManager.burst_clicks = 0
+	GameManager.apply_upgrade(item("cafecito"))
+	GameManager.apply_upgrade(item("cafecito"))
+	GameManager.apply_upgrade(item("team"))
+	GameManager.apply_upgrade(item("playlist"))
+	GameManager.phase = "ready"
+	GameManager.start_shift()
+	check(GameManager.remaining == 16, "Shared fixed extension cap failed")
+	GameManager.shift_clicks = 4
+	GameManager.tap()
+	check(GameManager.remaining == 16 and GameManager.extension_used == 0, "Music exceeded shared cap")
+	GameManager.upgrades = {"playlist": 4, "empire": 1}
+	GameManager.phase = "ready"
+	GameManager.start_shift()
+	GameManager.shift_clicks = 4
+	GameManager.tap()
+	check(GameManager.remaining == 12 and GameManager.extension_used == 2, "Music daily cap failed")
+	var timed := GameManager.snapshot()
+	GameManager.advance_time(1)
+	check(GameManager.restore(timed) and GameManager.remaining == 12 and GameManager.extension_used == 2, "Workday restore changed time budget")
+	GameManager.shift_clicks = 9
+	GameManager.tap()
+	check(GameManager.remaining == 12, "Loaded music budget paid twice")
+	GameManager.money = 0
+	GameManager.advance_time(100)
+	check(GameManager.money == 60, "Passive earnings used time beyond shift")
+	# Day scheduling, mandatory order, disk round trips and duplicate actions.
+	GameManager.new_game()
+	for day: int in range(1, 9):
+		GameManager.start_shift()
+		GameManager.advance_time(100)
+		check(GameManager.days == day and GameManager.phase == "upgrades", "Reward not first")
+		var saved := GameManager.snapshot()
+		check(GameManager.restore(saved) and GameManager.snapshot() == saved, "Pending reward changed on load")
+		var previous := GameManager.last_event_id
+		GameManager.buy_upgrade(GameManager.offers[0])
+		check(GameManager.phase == ("event" if day % 2 == 0 else "ready"), "Wrong event day")
+		if day % 2 == 0:
+			check(GameManager.event_id != previous, "Consecutive event repeated")
+			GameManager.persist()
+			SaveManager.load_data()
+			check(GameManager.restore(SaveManager.progression) and GameManager.phase == "event", "Pending event lost on disk")
+			GameManager.resolve_event()
+			var paid := GameManager.money
+			GameManager.resolve_event()
+			check(GameManager.money == paid and GameManager.phase == "ready", "Event paid twice")
+	# All positive outcomes, with exact amplifier and charge rounding.
+	for event: FlightDefinition in FlightCatalog.EVENTS:
+		for alternate: bool in [false, true]:
+			GameManager.upgrades = {"blessing": 2}
+			GameManager.relics = ["bracelet"]
+			GameManager.money = 100
+			GameManager.burst_clicks = 0
+			GameManager.phase = "event"
+			GameManager.event_id = event.id
+			var effect := event.alternative_effect if alternate else event.effect
+			var amount := event.alternative_amount if alternate else event.amount
+			GameManager.resolve_event(alternate)
+			if effect == "gift":
+				check(is_equal_approx(GameManager.money, 100 + amount * 1.5 * 5 * 1.15), "Event gift/amplifier failed: " + event.id)
+			else:
+				check(GameManager.money == 100 and GameManager.burst_clicks == int(ceilf(amount * 1.5)), "Event burst/amplifier failed: " + event.id)
+	# Safe legacy migration retains campaign, IDs, relics and decision.
+	var legacy := GameManager.snapshot()
+	legacy.game_version = 1
+	legacy.phase = "work"
+	legacy.remaining = 27
+	legacy.upgrades = {"appointment": 99, "team": 1, "cafecito": 99}
+	legacy.burst_clicks = 200
+	legacy.shields = 3
+	check(GameManager.restore(legacy), "Legacy save rejected")
+	check(GameManager.remaining <= 16 and GameManager.count("appointment") == 4 and GameManager.burst_clicks == 60, "Legacy bounds migration failed")
+	legacy.phase = "upgrades"
+	legacy.offers = ["appointment", "facetime", "tips"]
+	check(GameManager.restore(legacy) and GameManager.offers == ["facetime", "tips"], "Legacy shop migration failed")
+	legacy.phase = "event"
+	legacy.event_id = "repair"
+	GameManager.restore(legacy)
+	check(GameManager.phase == "upgrades" and GameManager.event_id == "repair", "Legacy event did not move behind reward")
+	GameManager.buy_upgrade(GameManager.offers[0])
+	GameManager.resolve_event()
+	check(GameManager.phase == "ready", "Legacy event did not resolve once")
+	await get_tree().process_frame
+
+func capture_decisions() -> void:
+	for width: int in [390, 360, 320]:
+		get_tree().root.size = Vector2i(width, 844)
+		GameManager.new_game()
+		GameManager.start_shift()
+		GameManager.advance_time(100)
+		# Show actual new and owned badges together.
+		GameManager.upgrades = {"appointment": 1}
+		GameManager.offers = ["appointment", "team", "playlist"]
+		GameManager.set_phase("upgrades")
+		await capture_view("rewards", width)
+		GameManager.pending_event = true
+		GameManager.event_id = "repair"
+		GameManager.buy_upgrade("appointment")
+		await capture_view("event", width)
+	get_tree().root.size = Vector2i(390, 844)
+
+func capture_view(label: String, width: int) -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var screen: Control = SceneManager.screen_host.get_child(0)
+	var scroll: ScrollContainer = screen.get_child(1)
+	check(screen.body.size.x <= screen.size.x - 40, "Content exceeds portrait width")
+	if label == "rewards":
+		check(scroll.get_v_scroll_bar().max_value > 844, "Long reward choices do not scroll")
+	check_buttons(screen)
+	if DisplayServer.get_name() != "headless":
+		await get_tree().create_timer(0.25).timeout
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("/tmp/omf_%s_%d.png" % [label, width])
+		scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+		await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("/tmp/omf_%s_%d_bottom.png" % [label, width])
+
+func check_buttons(node: Node) -> void:
+	if node is Button:
+		check(node.size.y >= 52, "Touch target too short")
+	for child: Node in node.get_children():
+		check_buttons(child)

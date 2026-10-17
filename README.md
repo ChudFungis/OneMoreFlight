@@ -7,9 +7,9 @@ A mobile-first, romantic incremental roguelike clicker about Dani’s Monterrey 
 Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait reference size is 390 × 844; smaller screens scroll. All actions use touch/mouse controls.
 
 1. New Game begins the Denver chapter. Continue restores the saved decision or remaining workday time. Starting over requires confirmation.
-2. Begin a 15-second workday and tap the big spa button. Money is both upgrade currency and travel savings.
-3. After each workday, choose among three random upgrades, buy any you can afford, or keep your savings. Every third workday has a 40% chance of an event.
-4. Buy the trip between workdays when you can afford it. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
+2. Begin a 10-second workday and tap the big spa button. Abilities can extend it to 16 seconds. Money is travel savings.
+3. After each workday, select exactly one free reward: a new ability or an owned ability’s next level. Every second completed chapter day then presents one event with two beneficial choices.
+4. Buy the trip after required choices when you can afford it. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
 5. Complete Denver, Italy, and the final one-way ticket to reach the ending.
 
 Pause / Save freezes work; Settings and Main Menu remain available. Losing application focus pauses the campaign. The game saves after decisions, when pausing, and every two seconds of active work. No offline earnings or real-money purchases. Audio buses/settings are retained; this version intentionally has no soundtrack.

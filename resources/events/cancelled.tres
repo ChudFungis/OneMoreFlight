@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "cancelled"
-title = "Appointment Canceled"
-description = "A client cancels to watch her novela. Lose 12% of savings."
-effect = "loss"
-amount = 0.12
-negative = true
-alternative = ""
-alternative_effect = ""
-alternative_amount = 0
+title = "Jake's Betrayal"
+description = "Dani calls Jake over. He looks at her, then runs straight to her sister.\nLaugh it off: +8 base-tap equivalents; Bribe Jake with attention: +15 double-earnings tap charges."
+choice = "Laugh it off"
+effect = "gift"
+amount = 8
+alternative = "Bribe Jake with attention"
+alternative_effect = "burst"
+alternative_amount = 15
 price = 0
+negative = false

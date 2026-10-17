@@ -3,8 +3,9 @@
 [resource]
 script = ExtResource("1")
 id = "playlist"
-title = "Monterrey Playlist"
-description = "Every fifth tap adds 0.15 seconds, up to 3 seconds per shift."
-effect = "encore"
-amount = 0.15
-price = 75
+title = "Carín León on Repeat"
+description = "Carín León is on repeat. Just one more song before the day ends.\n+0.5 seconds every 5th tap per level; maximum 4 levels; maximum +2 seconds per workday from this ability, combined extension cap +6s."
+effect = "tap_time"
+amount = 0.5
+max_level = 4
+price = 0

@@ -3,8 +3,7 @@
 [resource]
 script = ExtResource("1")
 id = "hoodie"
-title = "Josh’s Hoodie"
-description = "The first 10 taps of every shift earn 50% more."
+title = "Steal Josh's Clothes"
+description = "His closet is now your closet. The first few taps of every day feel extra cozy.\n+50% on regular-tap component for first 10 taps each shift."
 effect = "opening"
 amount = 0.5
-price = 0

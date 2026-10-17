@@ -3,12 +3,13 @@
 [resource]
 script = ExtResource("1")
 id = "dinner"
-title = "Tacos or Travel?"
-description = "Accept a family gift of 15 base taps, or invest 10% of savings for a free appointment upgrade."
+title = "One More Episode"
+description = "You were supposed to go to sleep an hour ago. Somehow, you're starting another episode.\nGo to sleep: +8 base-tap equivalents; Watch one more: +15 double-earnings tap charges."
+choice = "Go to sleep"
 effect = "gift"
-amount = 15
-negative = false
-alternative = "Invest 10%: free upgrade"
-alternative_effect = "invest"
-alternative_amount = 0.1
+amount = 8
+alternative = "Watch one more"
+alternative_effect = "burst"
+alternative_amount = 15
 price = 0
+negative = false
