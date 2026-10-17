@@ -499,22 +499,10 @@ func fit_card(card: Button, row: BoxContainer) -> void:
 
 func effect_summary(item: FlightDefinition, relic: bool) -> String:
 	if relic:
-		# The prose precedes the numerical line. Show the original exact effect.
 		return item.description.get_slice("\n", 1)
-	var level := GameManager.count(item.id) + 1
-	match item.id:
-		"appointment": return "+%d%% regular tap income" % roundi(level * item.amount * 100)
-		"blessing": return "+%d%% event gifts & charges" % roundi(level * item.amount * 100)
-		"cabrito": return "Refill %d double taps · %d charge cap" % [int(item.amount), GameManager.balance.burst_cap]
-		"cafecito", "team": return "+%ds each workday · shared +%ds cap" % [int(level * item.amount), int(GameManager.balance.max_shift_extension)]
-		"empire": return "+%d base taps per second" % int(level * item.amount)
-		"facetime": return "+%d base taps every 10th tap" % int(level * item.amount)
-		"flights": return "Current travel goal × %.2f" % (1.0 - item.amount)
-		"jar": return "+%d%% savings interest each day" % roundi(level * item.amount * 100)
-		"love": return "+%d%% per combo step · +90%% cap" % roundi(level * item.amount * 100)
-		"playlist": return "+%.1fs every 5th tap · +2s daily cap" % (level * item.amount)
-		"tips": return "+%d base taps every 7th tap" % int(level * item.amount)
-	return item.description
+	var level := GameManager.count(item.id)
+	var next := GameManager.ability_effect(item.id, level + 1)
+	return next if level == 0 else GameManager.ability_effect(item.id, level) + " → " + next
 
 func ignore_pointer(node: Node) -> void:
 	if node is Control:
@@ -712,7 +700,8 @@ func refresh() -> void:
 	if is_instance_valid(timer_label):
 		timer_label.text = "Day %d" % (GameManager.days + 1) if GameManager.phase in ["transition", "ready"] else "%.1f seconds" % GameManager.remaining
 	if is_instance_valid(effects_label):
-		effects_label.text = "Combo %d  ·  %d boosted taps" % [GameManager.combo, GameManager.burst_clicks]
+		effects_label.text = "%d event-boosted taps" % GameManager.burst_clicks if GameManager.burst_clicks > 0 else ""
+		effects_label.visible = GameManager.burst_clicks > 0
 	if GameManager.save_error and is_instance_valid(toast):
 		toast.text = "Save unavailable. Keep this tab open and try Pause / Save again."
 
@@ -742,7 +731,7 @@ func show_earning(amount: float) -> void:
 	feedback(text, at, false)
 	if not FlightStyle.reduced_motion and GameManager.shift_clicks % 6 == 0:
 		feedback("✦", at + Vector2(90, 35), true)
-	if not FlightStyle.reduced_motion and GameManager.combo >= 4 and is_instance_valid(heart_image):
+	if not FlightStyle.reduced_motion and GameManager.count("love") > 0 and is_instance_valid(heart_image):
 		heart_image.modulate = Color("ffd1e1")
 		heart_image.create_tween().tween_property(heart_image, "modulate", Color.WHITE, 0.12)
 

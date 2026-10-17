@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "jar"
 title = "Passive Income Princess"
-description = "Passive Income Princess does not work harder. Her savings do.\n+2% interest per level at day-end; max 3 levels (+6%)."
+description = "A princess lets her savings do some of the work.\nEarn 20% of current savings at day-end; +5 percentage points per additional level."
 effect = "interest"
-amount = 0.02
-max_level = 3
+amount = 0.2
+max_level = 0
 price = 0

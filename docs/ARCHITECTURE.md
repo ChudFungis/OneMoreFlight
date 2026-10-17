@@ -1,5 +1,7 @@
 # Gameplay architecture
 
+Current ability rules are documented in docs/GAME_DESIGN.md. Earlier version sections below are historical where they describe combo, consumable Cabrito, capped time or old interest.
+
 The original four autoloads and persistent `Main` scene remain. The renderer remains Compatibility. No dependency or global event bus was added.
 
 ## Ownership
@@ -82,3 +84,9 @@ The gameplay savings HUD is presentation-only: FlightScreen reads savings and th
 FlightSuitcase is a reusable local VBoxContainer, not an autoload. It receives current upgrade/relic collections, builds deduplicated stable-ID icon buttons and emits item_inspected(item, relic). FlightScreen forwards that signal to its retained details modal. A bounded internal ScrollContainer keeps the collection compact. Deterministic artwork-only rotation and short entrance Tweens never consume GameManager RNG or alter hit rectangles. Case chrome is drawn from shared theme tokens; all item images still use FlightArt. No managers, gameplay Resources, save schema or scene entry points changed.
 
 FlightScreen and its tests explicitly preload the suitcase script as SUITCASE_COMPONENT. Creation and test casts therefore resolve directly from the script path, without depending on an editor class-name cache refresh for FlightSuitcase.
+
+## Nine-ability rule update (snapshot v4)
+
+The catalog contains nine repeatable chapter abilities, with zero max_level meaning unlimited levels. Retired Resources remain on disk but cannot be offered. GameManager owns the permanent chance, chapter-long Nicky accumulator, every-50th-tap time grant and once-only Willow/Princess settlement. UI uses GameManager.ability_effect for current/next numerical descriptions and no longer displays combo or calls Cabrito a refill. Existing event charges and keepsakes retain their rules.
+
+Snapshots persist nicky_growth and RNG state (as text for browser-safe 64-bit round trips). Chapter reset clears growth and ordinary levels; workday reset clears only the daily tap count. Loading does not re-award music, interest or Willow gifts. Save versions 1–3 migrate retained IDs, ignore retired ones and convert old Cabrito refill ownership to one permanent chance level. Local completed results and settings are untouched.

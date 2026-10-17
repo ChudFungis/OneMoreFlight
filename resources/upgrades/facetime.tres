@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "facetime"
 title = "FaceTime Date"
-description = "One more FaceTime date, even though you probably called on WhatsApp.\n+8 base-tap equivalents on every 10th tap per level; max 3 levels."
+description = "Every FaceTime date brings you closer.\nEvery 10th tap pays +5 base-tap equivalents per level."
 effect = "milestone"
-amount = 8
-max_level = 3
+amount = 5
+max_level = 0
 price = 0

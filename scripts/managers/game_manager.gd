@@ -26,9 +26,7 @@ var shift_clicks: int = 0
 var burst_clicks: int = 0
 var pending_event: bool = false
 var last_event_id: String = ""
-var combo: int = 0
-var since_tap: float = 99.0
-var extension_used: float = 0.0
+var nicky_growth: float = 0.0
 var save_clock: float = 0.0
 var save_error: bool = false
 var rng := RandomNumberGenerator.new()
@@ -87,16 +85,15 @@ func new_game() -> void:
 	phase = "transition"
 	remaining = 0
 	shift_clicks = 0
-	combo = 0
-	since_tap = 99
-	extension_used = 0
+	nicky_growth = 0.0
 	save_clock = 0
 	state = State.PLAYING
 	persist()
 	SceneManager.show_screen("game")
 
 func has_save() -> bool:
-	return SaveManager.progression.get("game_version") == 1 or SaveManager.progression.get("game_version") == 2 or SaveManager.progression.get("game_version") == 3
+	var version: Variant = SaveManager.progression.get("game_version")
+	return version == 1 or version == 2 or version == 3 or version == 4
 
 func continue_game() -> void:
 	if not restore(SaveManager.progression):
@@ -111,20 +108,12 @@ func set_phase(value: String) -> void:
 	changed.emit()
 
 func fixed_extension() -> float:
-	return minf(power("cafecito") + power("team"), balance.max_shift_extension)
+	return power("team")
 
 func eligible_upgrade(item: FlightDefinition) -> bool:
-	if item == null:
+	if item == null or FlightCatalog.find_item(FlightCatalog.UPGRADES, item.id) == null:
 		return false
-	if item.id == "cabrito":
-		return burst_clicks < balance.burst_cap
-	if count(item.id) >= item.max_level:
-		return false
-	if item.id in ["cafecito", "team"] and fixed_extension() >= balance.max_shift_extension:
-		return false
-	if item.id == "playlist" and fixed_extension() >= balance.max_shift_extension:
-		return false
-	return true
+	return item.max_level == 0 or count(item.id) < item.max_level
 
 func upgrade_offers() -> Array:
 	var fresh: Array = []
@@ -147,9 +136,6 @@ func start_shift() -> void:
 		return
 	remaining = balance.shift_seconds + fixed_extension()
 	shift_clicks = 0
-	combo = 0
-	since_tap = 99
-	extension_used = 0
 	save_clock = 0
 	set_phase("work")
 
@@ -160,11 +146,10 @@ func advance_time(delta: float) -> void:
 	if state != State.PLAYING or phase != "work":
 		return
 	var elapsed := minf(maxf(delta, 0), remaining)
-	var passive := (power("empire") + relic_power("postcard"))
+	var passive := relic_power("postcard")
 	var passive_rate := passive * base_income() * global_multiplier()
 	if passive_rate > 0:
 		elapsed = minf(elapsed, maxf(0, (goal() - money) / passive_rate))
-	since_tap = minf(100, since_tap + elapsed)
 	remaining = maxf(0, remaining - elapsed)
 	money += elapsed * passive_rate
 	save_clock += elapsed
@@ -178,27 +163,23 @@ func advance_time(delta: float) -> void:
 func tap() -> float:
 	if phase != "work" or state != State.PLAYING or remaining <= 0:
 		return 0
-	combo = mini(combo + 1, 6) if since_tap <= balance.combo_window else 1
-	since_tap = 0
 	shift_clicks += 1
-	var multiplier := 1.0 + power("appointment")
-	if count("love") > 0:
-		multiplier *= 1.0 + minf(combo * power("love"), 0.9)
+	# Nicky adds base-value growth; it does not retroactively multiply old taps.
+	var multiplier := 1.0 + power("appointment") + nicky_growth
+	if count("cabrito") > 0 and rng.randf() < critical_chance(count("cabrito")):
+		multiplier *= 2
+	# Existing event boosts remain separate from the permanent Cabrito ability.
 	if burst_clicks > 0:
 		multiplier *= 2
 		burst_clicks -= 1
 	if has_relic("hoodie") and shift_clicks <= 10:
 		multiplier *= 1.0 + relic_power("hoodie")
 	var reward := base_income() * multiplier
-	if shift_clicks % 10 == 0:
+	if shift_clicks % balance.facetime_tap_interval == 0:
 		reward += base_income() * (power("facetime") + relic_power("unlimited"))
-	if shift_clicks % 7 == 0:
-		reward += base_income() * power("tips")
-	if shift_clicks % 5 == 0 and count("playlist") > 0:
-		var budget := minf(balance.playlist_extension_cap, balance.max_shift_extension - fixed_extension())
-		var extra := maxf(0, minf(power("playlist"), budget - extension_used))
-		remaining += extra
-		extension_used += extra
+	if shift_clicks % balance.music_tap_interval == 0:
+		remaining += power("playlist")
+	nicky_growth += power("love")
 	reward *= global_multiplier()
 	money += reward
 	earned.emit(reward)
@@ -207,13 +188,41 @@ func tap() -> float:
 		finish_shift()
 	return reward
 
+func critical_chance(level: int) -> float:
+	var item := FlightCatalog.find_item(FlightCatalog.UPGRADES, "cabrito")
+	return 1.0 - pow(1.0 - item.amount, level)
+
+func interest_rate(level: int) -> float:
+	if level <= 0:
+		return 0.0
+	var item := FlightCatalog.find_item(FlightCatalog.UPGRADES, "jar")
+	return item.amount + (level - 1) * balance.interest_level_step
+
+func ability_effect(id: String, level: int) -> String:
+	var item := FlightCatalog.find_item(FlightCatalog.UPGRADES, id)
+	if item == null or level <= 0:
+		return "Not owned"
+	match id:
+		"appointment": return "+%d%% regular taps" % roundi(level * item.amount * 100)
+		"love": return "+%.1f%% base value per tap" % (level * item.amount * 100)
+		"cabrito": return "%.1f%% chance of double taps" % (critical_chance(level) * 100)
+		"facetime": return "+%d base taps every 10th tap" % int(level * item.amount)
+		"team": return "+%ds every workday" % int(level * item.amount)
+		"playlist": return "+%.1fs every 50 taps" % (level * item.amount)
+		"flights": return "%.1f%% ticket reduction" % ((1.0 - pow(1.0 - item.amount, level)) * 100)
+		"jar": return "+%d%% savings at day-end" % roundi(interest_rate(level) * 100)
+		"tips": return "+%d base taps at day-end" % int(level * item.amount)
+	return item.description.get_slice("\n", 1)
+
 func finish_shift() -> void:
 	if phase != "work" or (remaining > 0 and money < goal()):
 		return
 	remaining = 0
 	days += 1
 	total_days += 1
-	money *= 1.0 + minf(power("jar"), 0.06)
+	# Settle Willow first, then apply Princess once to the resulting savings.
+	money += power("tips") * base_income() * global_multiplier()
+	money *= 1.0 + interest_rate(count("jar"))
 	if _complete_chapter():
 		return
 	offers = upgrade_offers()
@@ -265,8 +274,7 @@ func apply_upgrade(item: FlightDefinition) -> void:
 		return
 	upgrades[item.id] = count(item.id) + 1
 	match item.effect:
-		"burst": add_burst(int(item.amount))
-		"discount": goal_multiplier = maxf(0.5, goal_multiplier * (1.0 - item.amount))
+		"discount": goal_multiplier *= 1.0 - item.amount
 
 func next_day() -> void:
 	# Required rewards cannot be skipped by stale UI callbacks.
@@ -344,24 +352,26 @@ func choose_relic(id: String) -> void:
 	pending_event = false
 	last_event_id = ""
 	remaining = 0
+	nicky_growth = 0.0
+	shift_clicks = 0
 	offers = []
 	if has_relic("kiss"):
 		apply_upgrade(FlightCatalog.find_item(FlightCatalog.UPGRADES, "appointment"))
 	set_phase("transition")
 
 func snapshot() -> Dictionary:
-	return {"game_version": 3, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
+	return {"game_version": 4, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
 		"completed_chapters": completed_chapters.duplicate(), "complete": complete, "upgrades": upgrades.duplicate(),
 		"relics": relics.duplicate(), "phase": phase, "offers": offers.duplicate(), "event_id": event_id,
 		"goal_multiplier": goal_multiplier, "remaining": remaining, "shift_clicks": shift_clicks,
-		"burst_clicks": burst_clicks, "pending_event": pending_event, "last_event_id": last_event_id, "combo": combo, "since_tap": since_tap, "extension_used": extension_used}
+		"burst_clicks": burst_clicks, "pending_event": pending_event, "last_event_id": last_event_id, "nicky_growth": nicky_growth, "rng_state": str(rng.state)}
 
 func persist() -> void:
 	SaveManager.progression = snapshot()
 	save_error = SaveManager.save_data() != OK
 
 func restore(data: Dictionary) -> bool:
-	if data.get("game_version") != 1 and data.get("game_version") != 2 and data.get("game_version") != 3:
+	if data.get("game_version") != 1 and data.get("game_version") != 2 and data.get("game_version") != 3 and data.get("game_version") != 4:
 		return false
 	run_attempt = int(safe_number(data.get("run_attempt"), 0, 2000000000))
 	run_new_best = data.get("run_new_best", false) == true
@@ -400,15 +410,20 @@ func restore(data: Dictionary) -> bool:
 	event_id = str(data.get("event_id", ""))
 	if phase == "event" and FlightCatalog.find_item(FlightCatalog.EVENTS, event_id) == null:
 		phase = "upgrades"
-	goal_multiplier = clampf(safe_number(data.get("goal_multiplier"), 1, 1), 0.5, 1)
-	remaining = safe_number(data.get("remaining"), 0, balance.shift_seconds + balance.max_shift_extension)
+	goal_multiplier = pow(1.0 - FlightCatalog.find_item(FlightCatalog.UPGRADES, "flights").amount, count("flights"))
+	remaining = safe_number(data.get("remaining"), 0, 1e12)
 	shift_clicks = int(safe_number(data.get("shift_clicks"), 0, 100000))
 	burst_clicks = int(safe_number(data.get("burst_clicks"), 0, balance.burst_cap))
 	pending_event = data.get("pending_event", false) == true
 	last_event_id = str(data.get("last_event_id", ""))
-	combo = int(safe_number(data.get("combo"), 0, 6))
-	since_tap = safe_number(data.get("since_tap"), 99, 100)
-	extension_used = safe_number(data.get("extension_used"), 0, balance.playlist_extension_cap)
+	nicky_growth = safe_number(data.get("nicky_growth"), 0, 1e12) if data.get("game_version") == 4 else 0.0
+	# Store 64-bit RNG state as text so browser JSON never rounds it.
+	var saved_rng: Variant = data.get("rng_state")
+	if saved_rng is String and saved_rng.is_valid_int():
+		rng.state = int(saved_rng)
+	# Legacy Cabrito counted consumable refills, not permanent chance levels.
+	if data.get("game_version") != 4 and count("cabrito") > 0:
+		upgrades["cabrito"] = 1
 	# v0.1 decisions are retained, but old shops become one mandatory free reward.
 	# Move legacy events behind their unclaimed free reward, retaining the event ID.
 	if data.get("game_version") == 1:
@@ -431,7 +446,9 @@ func restore(data: Dictionary) -> bool:
 			offers = upgrade_offers()
 		if offers.is_empty():
 			phase = "event" if pending_event else "transition"
-	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + minf(balance.playlist_extension_cap, balance.max_shift_extension - fixed_extension()))
+	# No gameplay extension cap: validate against time actually earned by taps.
+	var earned_time := floorf(float(shift_clicks) / balance.music_tap_interval) * power("playlist")
+	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + earned_time)
 	save_clock = 0
 	if phase == "work" and money >= goal():
 		finish_shift()
