@@ -22,6 +22,7 @@ func run_checks() -> void:
 	get_tree().root.size = Vector2i(390, 844)
 	saved_settings = SaveManager.settings.duplicate(true)
 	SaveManager.save_path = "/tmp/one_more_flight_tests.json"
+	FlightStyle.preference_path = "/tmp/one_more_flight_presentation_tests.cfg"
 	GameManager.set_process(false)
 	# Load retained scripts inside the project runtime so autoloads are present.
 	for path: String in ["res://scripts/ui/game.gd", "res://scripts/ui/menu.gd", "res://scripts/ui/settings.gd"]:
@@ -30,6 +31,7 @@ func run_checks() -> void:
 	main = preload("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	check(SceneManager.screen_host.get_child(0).view == "main_menu", "Main menu missing")
+	await capture_view("main_menu", 390)
 	GameManager.new_game()
 	check(GameManager.phase == "ready" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
@@ -158,6 +160,7 @@ func run_checks() -> void:
 		check(GameManager.phase == ("event" if day == 2 else "ready"), "New chapter event cadence failed")
 		if day == 2:
 			GameManager.resolve_event()
+	await check_presentation()
 	await capture_decisions()
 	# Deterministic complete games at different tapping rates, using real timers/income.
 	for rate: int in [2, 3, 4]:
@@ -348,20 +351,31 @@ func check_redesign() -> void:
 	await get_tree().process_frame
 
 func capture_decisions() -> void:
-	for width: int in [390, 360, 320]:
+	for width: int in [390, 360, 320, 430, 1024]:
 		get_tree().root.size = Vector2i(width, 844)
 		GameManager.new_game()
+		await capture_view("ready", width)
 		GameManager.start_shift()
+		await capture_view("heart", width)
 		GameManager.advance_time(100)
 		# Show actual new and owned badges together.
 		GameManager.upgrades = {"appointment": 1}
 		GameManager.offers = ["appointment", "team", "playlist"]
 		GameManager.set_phase("upgrades")
 		await capture_view("rewards", width)
+		var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+		screen.select_choice("appointment")
+		await capture_view("selected", width)
 		GameManager.pending_event = true
 		GameManager.event_id = "repair"
 		GameManager.buy_upgrade("appointment")
 		await capture_view("event", width)
+		GameManager.resolve_event()
+		GameManager.money = GameManager.goal()
+		GameManager.buy_trip()
+		await capture_view("story", width)
+		GameManager.finish_story()
+		await capture_view("relics", width)
 	get_tree().root.size = Vector2i(390, 844)
 
 func capture_view(label: String, width: int) -> void:
@@ -370,9 +384,17 @@ func capture_view(label: String, width: int) -> void:
 	var screen: Control = SceneManager.screen_host.get_child(0)
 	var scroll: ScrollContainer = screen.get_child(1)
 	check(screen.body.size.x <= screen.size.x - 40, "Content exceeds portrait width")
-	if label == "rewards":
-		check(scroll.get_v_scroll_bar().max_value > 844, "Long reward choices do not scroll")
+	if label in ["rewards", "relics"]:
+		check(screen.selection_cards.size() == 3, "Three choices are not present")
+		for card: Button in screen.selection_cards.values():
+			check(card.get_global_rect().end.x <= screen.size.x, "Card exceeds viewport")
+			check(card.get_global_rect().end.y <= screen.size.y, "Choice hidden below viewport")
+			var row: BoxContainer = card.get_child(0).get_child(0)
+			check(row.get_global_rect().end.y <= card.get_global_rect().end.y, "Card content spills outside border")
 	check_buttons(screen)
+	for child: Node in screen.get_children():
+		if child.name == "Celebration":
+			check(child.size.y <= 60, "Celebration obscures the screen")
 	if DisplayServer.get_name() != "headless":
 		await get_tree().create_timer(0.25).timeout
 		await RenderingServer.frame_post_draw
@@ -387,3 +409,60 @@ func check_buttons(node: Node) -> void:
 		check(node.size.y >= 52, "Touch target too short")
 	for child: Node in node.get_children():
 		check_buttons(child)
+
+func check_presentation() -> void:
+	for entry: Array in [["upgrades", FlightCatalog.UPGRADES], ["events", FlightCatalog.EVENTS], ["relics", FlightCatalog.RELICS]]:
+		for definition: FlightDefinition in entry[1]:
+			check(ResourceLoader.exists("res://assets/art/%s/%s.svg" % [entry[0], definition.id]), "Placeholder missing: " + definition.id)
+			check(FlightArt.texture(entry[0], definition.id) != null, "Artwork failed to resolve")
+	check(FlightArt.texture("events", "missing_test_id") != null, "Missing art fallback failed")
+	GameManager.new_game()
+	GameManager.start_shift()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	var before_clicks := GameManager.shift_clicks
+	var before_money := GameManager.money
+	# Dispatch real GUI mouse down/up events, with touch represented by that same path.
+	for index: int in range(30):
+		var down := InputEventMouseButton.new()
+		down.button_index = MOUSE_BUTTON_LEFT
+		down.position = screen.tap_button.get_global_rect().get_center()
+		down.pressed = true
+		get_viewport().push_input(down, true)
+		var up := down.duplicate() as InputEventMouseButton
+		up.pressed = false
+		get_viewport().push_input(up, true)
+	check(GameManager.shift_clicks == before_clicks + 30, "Rapid GUI taps missed or doubled")
+	check(GameManager.money == before_money + 150, "GUI tap payouts changed")
+	check(screen.timer_label.text == "10.0 seconds", "Timer display does not match remaining time")
+	check(screen.feedback_count >= 30 and screen.feedback_count <= 35, "Earnings feedback missing or particles excessive")
+	GameManager.finish_shift()
+	screen = SceneManager.screen_host.get_child(0)
+	var id: String = GameManager.offers[0]
+	var old_level := GameManager.count(id)
+	var untouched := GameManager.snapshot()
+	screen.select_choice(id)
+	check(GameManager.snapshot() == untouched, "Highlight committed a reward prematurely")
+	GameManager.persist()
+	SaveManager.load_data()
+	GameManager.restore(SaveManager.progression)
+	screen.rebuild()
+	check(screen.selected_id.is_empty() and GameManager.phase == "upgrades", "Restore lost required choice")
+	screen.select_choice(id)
+	screen.commit_choice()
+	screen.commit_choice()
+	check(GameManager.count(id) == old_level + 1 and GameManager.money == before_money + 150, "Confirmation duplicated or charged reward")
+	FlightStyle.reduced_motion = true
+	check(FlightStyle.save_preferences() == OK, "Motion preference save failed")
+	FlightStyle.reduced_motion = false
+	FlightStyle.load_preferences()
+	check(FlightStyle.reduced_motion, "Motion preference restore failed")
+	GameManager.start_shift()
+	screen = SceneManager.screen_host.get_child(0)
+	screen.animate_tap()
+	screen.release_heart()
+	check(screen.heart_image.scale == Vector2.ONE, "Reduced motion still scales heart")
+	FlightStyle.reduced_motion = false
+	DirAccess.remove_absolute(FlightStyle.preference_path)
+	await get_tree().process_frame

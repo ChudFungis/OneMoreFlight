@@ -19,3 +19,7 @@ A **Web** preset is included in `export_presets.cfg`, with threads and extension
 Single-thread export avoids the SharedArrayBuffer/cross-origin-isolation requirement of threaded builds. Godot maps `user://` persistence to browser storage when permitted. See [Godot's official Web export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html) for platform constraints and hosting details.
 
 The Web preset contains no service worker/offline cache, external analytics, or network requests. Browser download size is mainly the Godot runtime plus illustrations; optimize replacement images before exporting. Initial load, mobile performance and durable Safari storage must be verified on a real device before sharing the game.
+
+## v0.3 check
+
+The Web release export command was run during v0.3 validation. Godot reported missing 4.7.2 `web_nothreads_debug.zip` and `web_nothreads_release.zip` templates; no runnable browser artifact was produced. The preset remains unchanged. After installing templates, check the new heart input, all three compact reward cards, event/relic artwork, reduced-motion preference, focus pause, touch scrolling and device safe areas in the browser.

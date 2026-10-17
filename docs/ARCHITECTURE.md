@@ -23,10 +23,20 @@ The snapshot includes chapter, money, chapter/total completed days, upgrades, re
 
 `FlightBalance` centralizes economy parameters. `FlightStory` holds editable prose. The screen script selects a view from its scene export. It uses one set of mobile layout/card/art helpers, a shared theme, containers, word wrapping and scrolling. Long choices remain accessible below the fold. The three old UI scripts are lightweight compatibility wrappers; current scenes use FlightScreen directly. `game_over.tscn` is retained as an old navigation alias; chapter endings now live in the campaign flow.
 
-Every touch target is at least 52 logical pixels high; the work button is 220. Touch is emulated as mouse input once, so income is attached only to the button's pressed signal (not simultaneously to touch and mouse events). Fades, image zoom, button squash, floating labels and progress interpolation use built-in Tweens/Controls. No shaders, portraits, network services, or desktop-only gameplay input are required.
+Every touch target is at least 52 logical pixels high; the heart hit area is 250. Touch is emulated as mouse input once, so income is attached only to the button's pressed signal (not simultaneously to touch and mouse events). Short fades, image compression, floating labels, card highlights and celebration banners use built-in Tweens/Controls. Progress and timer labels render the current state directly. No shaders, portraits, network services, or desktop-only gameplay input are required.
 
 ## v0.2 save compatibility
 
 Campaign snapshots now use game_version 2; Continue accepts versions 1 and 2 (including JSON numeric version values). v0.1 levels, bursts and work time are clamped to v0.2 bounds. Stable IDs, savings, chapters, discounts and relics are preserved. Old shields are retired; owned blessing levels become the positive event amplifier. Legacy team levels become time extensions. A legacy shop becomes one mandatory free reward, retaining eligible offered IDs; if none remain, generate eligible replacements. A legacy event is retained and queued after its free reward. Previously purchased legacy shop items cannot be reconstructed; one free reward is allowed on migration. Old ready saves remain ready; prior days are not replayed. Migration is written by the next save/decision. No offline earnings are introduced.
 
 Pending events are selected and persisted when work finishes, before the reward. Selecting the reward clears all offers and saves the next phase. Resolving the event clears pending state and saves ready. Stale callbacks cannot buy a second card, resolve an event twice, or travel before choices finish. An exhausted pool skips only the impossible reward, retaining any due event.
+
+## v0.3 presentation
+
+No GameManager, SaveManager, economy Resources or story content changed. Existing scene entry points remain; FlightScreen builds local components. FlightStyle provides the shared theme and a separate reduced-motion preference. FlightArt resolves explicit textures and stable-ID paths with a fallback. No autoload or dependencies were added.
+
+The heart is a normal Button with a transparent style and an input-ignoring image; only its pressed signal calls tap. Scaling affects the image, keeping the hit rectangle fixed. An independent UI RNG positions earnings without consuming the gameplay RNG. Every successful tap uses the earned amount for its label; particles are occasional and suppressed during heavy input. Labels expire after 0.55 seconds.
+
+Reward and relic cards highlight locally, then one Confirm action calls the existing GameManager action synchronously. It persists before any outcome animation. Highlight state is deliberately not saved; loading an unconfirmed choice shows the same offers with no selection. Rebuilding clears local selection and stale confirms do nothing. Animation callbacks only remove visual nodes, never award earnings or rewards.
+
+At logical widths >=720, choice cards form three columns with illustrations above text; narrower windows show all three compact illustrated rows together, with scrolling retained as an overflow fallback. 20-pixel side gutters and 28-pixel vertical gutters provide conservative phone spacing; physical safe-area behavior still requires browser/device validation.
