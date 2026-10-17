@@ -32,6 +32,9 @@ var extension_used: float = 0.0
 var save_clock: float = 0.0
 var save_error: bool = false
 var rng := RandomNumberGenerator.new()
+var run_attempt: int = 0
+var chapter_days: Array = []
+var run_new_best: bool = false
 
 func _ready() -> void:
 	rng.randomize()
@@ -64,6 +67,9 @@ func global_multiplier() -> float:
 	return 1.0 + relic_power("bracelet")
 
 func new_game() -> void:
+	run_attempt = SaveManager.results.begin_attempt()
+	chapter_days = []
+	run_new_best = false
 	chapter = 0
 	money = 0
 	days = 0
@@ -280,15 +286,29 @@ func buy_trip() -> bool:
 	money -= goal()
 	if chapter not in completed_chapters:
 		completed_chapters.append(chapter)
+		chapter_days.append(days)
 	if chapter == 2:
 		complete = true
+		record_completed_run()
 	set_phase("story")
 	return true
+
+func record_completed_run() -> void:
+	if not complete or chapter != 2 or completed_chapters.size() != 3 or total_days <= 0:
+		return
+	if run_attempt <= 0:
+		run_attempt = SaveManager.results.begin_attempt()
+	if not SaveManager.results.has_recorded(run_attempt):
+		var counts: Array = chapter_days if chapter_days.size() == 3 else []
+		run_new_best = SaveManager.results.record_run(run_attempt, total_days, counts, Time.get_datetime_string_from_system(true) + "Z")
+	elif SaveManager.results.last_error != OK:
+		SaveManager.results.save_data()
 
 func finish_story() -> void:
 	if phase != "story":
 		return
 	if chapter == 2:
+		record_completed_run()
 		set_phase("ending")
 	else:
 		offers = random_ids(FlightCatalog.RELICS, 3, relics)
@@ -313,7 +333,7 @@ func choose_relic(id: String) -> void:
 	set_phase("ready")
 
 func snapshot() -> Dictionary:
-	return {"game_version": 2, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
+	return {"game_version": 2, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
 		"completed_chapters": completed_chapters.duplicate(), "complete": complete, "upgrades": upgrades.duplicate(),
 		"relics": relics.duplicate(), "phase": phase, "offers": offers.duplicate(), "event_id": event_id,
 		"goal_multiplier": goal_multiplier, "remaining": remaining, "shift_clicks": shift_clicks,
@@ -326,13 +346,20 @@ func persist() -> void:
 func restore(data: Dictionary) -> bool:
 	if data.get("game_version") != 1 and data.get("game_version") != 2:
 		return false
+	run_attempt = int(safe_number(data.get("run_attempt"), 0, 2000000000))
+	run_new_best = data.get("run_new_best", false) == true
+	chapter_days = []
+	var saved_days: Variant = data.get("chapter_days", [])
+	if saved_days is Array:
+		for value: Variant in saved_days.slice(0, 3):
+			chapter_days.append(int(safe_number(value, 0, 100000)))
 	chapter = clampi(int(data.get("chapter", 0)), 0, 2)
 	money = safe_number(data.get("money"), 0, 1e12)
 	days = int(safe_number(data.get("days"), 0, 100000))
 	total_days = int(safe_number(data.get("total_days"), days, 300000))
 	completed_chapters = []
 	for value: Variant in data.get("completed_chapters", []) if data.get("completed_chapters") is Array else []:
-		if value in [0, 1, 2] and value not in completed_chapters:
+		if (value is int or value is float) and value == int(value) and int(value) in [0, 1, 2] and int(value) not in completed_chapters:
 			completed_chapters.append(int(value))
 	complete = data.get("complete", false) == true
 	upgrades = {}

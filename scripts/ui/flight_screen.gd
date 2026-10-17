@@ -22,6 +22,7 @@ var ui_rng := RandomNumberGenerator.new()
 var feedback_count: int = 0
 var last_phase: String = ""
 var viewport_width: float = 0
+var home_starting: bool = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE if view == "game" else Node.PROCESS_MODE_ALWAYS
@@ -96,6 +97,7 @@ func rebuild() -> void:
 	margin.add_child(body)
 	match view:
 		"main_menu": build_menu()
+		"results": build_results()
 		"pause_menu": build_pause()
 		"settings": build_settings()
 		"game": build_game()
@@ -111,6 +113,8 @@ func rebuild() -> void:
 			celebrate("Workday complete ♡")
 		elif GameManager.phase == "story" and last_phase == "ready":
 			celebrate("One flight closer ✦")
+		if GameManager.phase == "ending" and last_phase != "ending":
+			celebrate("You made it! ♡", true)
 		last_phase = GameManager.phase
 
 func artwork(id: String, height: float = 190, folder: String = "story", explicit: Texture2D = null) -> void:
@@ -124,32 +128,93 @@ func artwork(id: String, height: float = 190, folder: String = "story", explicit
 		image.modulate.a = 0
 		image.create_tween().tween_property(image, "modulate:a", 1.0, FlightStyle.ENTER_SECONDS)
 
-func build_menu() -> void:
-	label_text("ONE MORE FLIGHT", 33, FlightStyle.BURGUNDY)
-	label_text("A little hustle. A lot of love.", 18)
-	artwork("main_menu", 220)
-	label_text("Dani’s spa is in Monterrey. Josh is a flight away. Tap through workdays, build a tiny spa empire, and turn ‘I miss you’ into ‘I’m here.’")
-	if GameManager.has_save():
-		button("Continue Game", GameManager.continue_game, true)
-	button("New Game", confirm_new_game, not GameManager.has_save())
-	button("Settings", SceneManager.open_settings)
-	if not OS.has_feature("web"):
-		button("Quit", func() -> void: get_tree().quit())
-	label_text("Three chapters · play at your own pace · saves on this device", 14)
+func centered_label(text: String, font_size: int, color: Color = FlightStyle.INK) -> Label:
+	var label := label_text(text, font_size, color)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return label
 
-func confirm_new_game() -> void:
-	if not GameManager.has_save():
-		GameManager.new_game()
+func build_menu() -> void:
+	centered_label("A LITTLE ADVENTURE FOR YOU ♡", 12, FlightStyle.MUTED)
+	centered_label("One More Flight ♡", 32, FlightStyle.BURGUNDY)
+	centered_label("Every tap brings us closer.", 17, FlightStyle.MUTED)
+	var space := Control.new()
+	space.custom_minimum_size.y = 12
+	body.add_child(space)
+	build_heart(start_adventure)
+	tap_button.name = "HomeHeart"
+	tap_button.tooltip_text = "Start a fresh adventure"
+	tap_button.custom_minimum_size.y = 275
+	centered_label("Tap to begin ♡", 18, FlightStyle.BURGUNDY)
+	var panel := PanelContainer.new()
+	body.add_child(panel)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	panel.add_child(content)
+	var previous := body
+	body = content
+	centered_label("Your Best Adventure ♡", 18, FlightStyle.BURGUNDY)
+	var best: Dictionary = SaveManager.results.best
+	if best.is_empty():
+		centered_label("Complete a story to set your first record.", 15, FlightStyle.MUTED)
+	else:
+		centered_label("%d workdays" % int(best.total_days), 26)
+	body = previous
+	var footer := HBoxContainer.new()
+	footer.alignment = BoxContainer.ALIGNMENT_CENTER
+	footer.add_theme_constant_override("separation", 16)
+	body.add_child(footer)
+	for entry: Array in [["Results", "trophy", show_results], ["Settings", "gear", SceneManager.open_settings]]:
+		var control := button(entry[0], entry[2])
+		control.icon = FlightArt.texture("ui", entry[1])
+		control.expand_icon = true
+		control.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		control.custom_minimum_size.x = 110
+		control.add_theme_constant_override("icon_max_width", 22)
+		control.add_theme_font_size_override("font_size", 15)
+		control.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+		control.reparent(footer)
+	if SaveManager.results.last_error != OK:
+		centered_label("Local results couldn’t be saved. Please keep this window open and try again.", 14, FlightStyle.BURGUNDY)
+
+func start_adventure() -> void:
+	if home_starting or view != "main_menu":
 		return
-	var dialog := ConfirmationDialog.new()
-	dialog.title = "Start a new love story?"
-	dialog.dialog_text = "This replaces your saved chapters, upgrades, and relics."
-	dialog.ok_button_text = "New Game"
-	dialog.cancel_button_text = "Keep my progress"
-	dialog.confirmed.connect(GameManager.new_game)
-	dialog.canceled.connect(dialog.queue_free)
-	add_child(dialog)
-	dialog.popup_centered(Vector2i(320, 200))
+	home_starting = true
+	GameManager.new_game()
+
+func show_results() -> void:
+	view = "results"
+	rebuild()
+
+func show_home() -> void:
+	view = "main_menu"
+	rebuild()
+
+func build_results() -> void:
+	centered_label("Your Adventures ♡", 29, FlightStyle.BURGUNDY)
+	var results: FlightResults = SaveManager.results
+	if results.best.is_empty():
+		centered_label("No adventures completed yet. Your first one is waiting! ♡", 18)
+	else:
+		centered_label("YOUR PERSONAL BEST", 13, FlightStyle.MUTED)
+		centered_label("%d workdays ♡" % int(results.best.total_days), 30, FlightStyle.BURGUNDY)
+		centered_label("Your five most recent adventures", 15, FlightStyle.MUTED)
+		for record: Dictionary in results.recent:
+			var panel := PanelContainer.new()
+			body.add_child(panel)
+			var content := VBoxContainer.new()
+			content.add_theme_constant_override("separation", 4)
+			panel.add_child(content)
+			var previous := body
+			body = content
+			var tied_best := int(record.total_days) == int(results.best.total_days)
+			label_text("%s%d workdays" % ["♡  " if tied_best else "", int(record.total_days)], 21, FlightStyle.BURGUNDY)
+			var date := str(record.completed_at).get_slice("T", 0)
+			label_text("Adventure #%d%s" % [int(record.attempt), " · " + date + " UTC" if not date.is_empty() else ""], 14, FlightStyle.MUTED)
+			if record.chapter_days.size() == 3:
+				label_text("Denver %d · Italy %d · Our Future %d" % record.chapter_days, 14, FlightStyle.MUTED)
+			body = previous
+	button("Back ♡", show_home)
 
 func build_pause() -> void:
 	label_text("A little breather ♡", 29)
@@ -236,11 +301,20 @@ func build_game() -> void:
 			label_text("Choose one keepsake. Its bonus stays for every chapter ahead.", 16)
 			build_choices(true)
 		"ending":
+			label_text("You made it! ♡", 28, FlightStyle.BURGUNDY)
+			label_text("Your adventure took %d workdays." % GameManager.total_days, 21)
+			if GameManager.run_new_best:
+				label_text("NEW PERSONAL BEST!", 18, FlightStyle.BURGUNDY)
 			artwork("final", 270)
 			label_text("No more counting the days apart.", 28, FlightStyle.BURGUNDY)
 			label_text(STORY.ending)
-			label_text("Three trips. %d workdays. One very determined heart." % GameManager.total_days)
-			button("Back to Main Menu", GameManager.main_menu, true)
+			if SaveManager.results.last_error != OK:
+				label_text("Couldn’t save your results. Please try again before leaving.", 15)
+				button("Retry saving results", func() -> void:
+					SaveManager.results.save_data()
+					rebuild())
+			button("Home ♡", GameManager.main_menu)
+			button("Start another adventure", restart_adventure, true)
 	if GameManager.phase in ["ready", "work"]:
 		var details := button("Your abilities & keepsakes ▾", toggle_details)
 		details.add_theme_font_size_override("font_size", 15)
@@ -249,11 +323,17 @@ func build_game() -> void:
 	if GameManager.phase not in ["story", "ending"]:
 		button("Pause / Save", SceneManager.pause_run)
 
+func restart_adventure() -> void:
+	if decision_locked or GameManager.phase != "ending":
+		return
+	decision_locked = true
+	GameManager.new_game()
+
 func toggle_details() -> void:
 	if is_instance_valid(bonus_label):
 		bonus_label.visible = not bonus_label.visible
 
-func build_heart() -> void:
+func build_heart(action: Callable = Callable()) -> void:
 	tap_button = Button.new()
 	tap_button.name = "TapHeart"
 	tap_button.tooltip_text = "Tap to earn travel savings"
@@ -267,7 +347,10 @@ func build_heart() -> void:
 	tap_button.add_child(heart_image)
 	heart_image.resized.connect(func() -> void: heart_image.pivot_offset = heart_image.size / 2)
 	# One input route only. Animation never changes the hit area or awards income.
-	tap_button.pressed.connect(func() -> void: GameManager.tap())
+	if action.is_valid():
+		tap_button.pressed.connect(action)
+	else:
+		tap_button.pressed.connect(func() -> void: GameManager.tap())
 	tap_button.button_down.connect(animate_tap)
 	tap_button.button_up.connect(release_heart)
 
@@ -383,6 +466,10 @@ func adapt_layout() -> void:
 	if not is_instance_valid(body):
 		return
 	viewport_width = size.x
+	if view in ["main_menu", "results"]:
+		var margin: MarginContainer = body.get_parent()
+		for side: String in ["left", "right"]:
+			margin.add_theme_constant_override("margin_" + side, maxi(20, int((size.x - 520) / 2)))
 	if is_instance_valid(choice_grid):
 		var wide := size.x >= 720
 		choice_grid.columns = 3 if wide else 1

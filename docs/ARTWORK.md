@@ -9,7 +9,7 @@ All illustrations resolve through `scripts/ui/flight_art.gd`. No portraits were 
 | `assets/art/events/` | `call`, `cancelled`, `dinner`, `gift`, `rain`, `repair`, `sale`, `viral` | 960 × 540 landscape PNG/WebP |
 | `assets/art/relics/` | `bracelet`, `hoodie`, `kiss`, `passport`, `postcard`, `unlimited` | 512 × 512 square PNG/WebP |
 | `assets/art/story/` | `main_menu`, `denver`, `italy`, `final` | 1200 × 800 landscape PNG/WebP |
-| `assets/art/ui/` | `heart`, `sparkle` | 64–128 px square transparent decorations |
+| `assets/art/ui/` | `heart`, `sparkle`, `trophy`, `gear` | 64–128 px square transparent decorations |
 
 Content names may change; filename IDs must remain stable. The existing shared fallback is `assets/art/icon_placeholder.svg`. The final story image is reused for the ending. The main heart is rendered with nearest filtering to keep pixels crisp; other images use linear filtering for future cartoon illustrations. Pixel source SVGs have aligned edges and a consistent rose/cream palette.
 

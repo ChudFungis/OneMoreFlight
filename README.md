@@ -6,7 +6,7 @@ A mobile-first, romantic incremental roguelike clicker about Dani’s Monterrey 
 
 Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait reference size is 390 × 844; smaller screens scroll. All actions use touch/mouse controls.
 
-1. New Game begins the Denver chapter. Continue restores the saved decision or remaining workday time. Starting over requires confirmation.
+1. Tap the home-screen heart to start a fresh adventure in Denver immediately. Your best completed adventure and five recent results stay saved. Results and Settings are the small controls below the heart.
 2. Begin a 10-second workday and tap the large pixel heart. Abilities can extend it to 16 seconds. Money is travel savings.
 3. After each workday, highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every second completed chapter day then presents one event with two beneficial choices.
 4. Buy the trip after required choices when you can afford it. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay.
@@ -36,8 +36,8 @@ From the project directory:
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . tests/test_foundation.tscn
 ```
 
-Use `godot` instead of the application path if installed on PATH. The suite uses a separate `/tmp/one_more_flight_tests.json`, removes it afterward, and never overwrites a player save. Run one test instance at a time. A corrupt-save recovery warning is intentional. Graphical tests can be run by removing `--headless`.
+Use `godot` instead of the application path if installed on PATH. The suite uses a separate `/tmp/one_more_flight_tests.json`, removes it afterward, and never overwrites a player save. Tests also isolate results at `/tmp/one_more_flight_results_tests.json` and motion preferences in a separate temporary file. Run one test instance at a time. A corrupt-save recovery warning is intentional. Graphical tests can be run by removing `--headless`.
 
-Local saves use `user://save_data.json`, normally `~/Library/Application Support/Godot/app_userdata/One More Flight/` on macOS. Saves stay on the device/browser. The original prototype’s empty progression envelope is not a campaign save; Continue appears only for a versioned campaign.
+Active saves use `user://save_data.json`, normally `~/Library/Application Support/Godot/app_userdata/One More Flight/` on macOS. Saves stay on the device/browser. The home screen always opens first and never resumes unfinished progress. Its heart resets active progression; local completed-run records live separately in `user://results.json`. Lowest total workdays wins, with tied scores treated equally.
 
 Read [architecture](docs/ARCHITECTURE.md), [content and balance](docs/GAME_DESIGN.md), [art replacement](docs/ARTWORK.md), [Web export](docs/WEB_EXPORT.md), and [validation](docs/VALIDATION.md).

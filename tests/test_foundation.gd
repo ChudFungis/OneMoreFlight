@@ -22,6 +22,11 @@ func run_checks() -> void:
 	get_tree().root.size = Vector2i(390, 844)
 	saved_settings = SaveManager.settings.duplicate(true)
 	SaveManager.save_path = "/tmp/one_more_flight_tests.json"
+	SaveManager.progression = {}
+	SaveManager.results = FlightResults.new()
+	SaveManager.results.save_path = "/tmp/one_more_flight_results_tests.json"
+	DirAccess.remove_absolute(SaveManager.results.save_path)
+	SaveManager.results.load_data()
 	FlightStyle.preference_path = "/tmp/one_more_flight_presentation_tests.cfg"
 	GameManager.set_process(false)
 	# Load retained scripts inside the project runtime so autoloads are present.
@@ -32,6 +37,7 @@ func run_checks() -> void:
 	add_child(main)
 	check(SceneManager.screen_host.get_child(0).view == "main_menu", "Main menu missing")
 	await capture_view("main_menu", 390)
+	await check_home_results()
 	GameManager.new_game()
 	check(GameManager.phase == "ready" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
@@ -187,6 +193,8 @@ func run_checks() -> void:
 	SaveManager.load_data()
 	check(SaveManager.settings.has("music_volume"), "Corrupt save destroyed settings")
 	DirAccess.remove_absolute(SaveManager.save_path)
+	DirAccess.remove_absolute(SaveManager.results.save_path)
+	DirAccess.remove_absolute(SaveManager.results.save_path + ".tmp")
 	SaveManager.settings = saved_settings
 	print("One More Flight: %d checks, %d failures" % [checks, failures])
 	get_tree().quit(failures)
@@ -224,6 +232,8 @@ func simulate_game(rate: int) -> void:
 			"relic": GameManager.choose_relic(GameManager.offers[0])
 		await get_tree().process_frame
 	check(GameManager.complete and GameManager.completed_chapters.size() == 3 and GameManager.relics.size() == 2, "Full game not reachable at %d taps/sec" % rate)
+	check(GameManager.chapter_days == chapter_days, "Completed chapter counts differ from simulation")
+	check(SaveManager.results.recent[0].total_days == GameManager.total_days, "Completed campaign result missing")
 	print("Balance simulation %d taps/sec: days %s, working %.1fs" % [rate, chapter_days, work_seconds])
 
 func check_redesign() -> void:
@@ -465,4 +475,103 @@ func check_presentation() -> void:
 	check(screen.heart_image.scale == Vector2.ONE, "Reduced motion still scales heart")
 	FlightStyle.reduced_motion = false
 	DirAccess.remove_absolute(FlightStyle.preference_path)
+	await get_tree().process_frame
+
+func finish_test_adventure(counts: Array) -> void:
+	GameManager.new_game()
+	for chapter_day_count: int in counts:
+		GameManager.days = chapter_day_count
+		GameManager.total_days += chapter_day_count
+		GameManager.money = GameManager.goal()
+		check(GameManager.buy_trip(), "Test trip rejected")
+		GameManager.finish_story()
+		if GameManager.phase == "relic":
+			GameManager.choose_relic(GameManager.offers[0])
+
+func check_home_results() -> void:
+	var results: FlightResults = SaveManager.results
+	check(results.best.is_empty() and results.recent.is_empty(), "First launch contains completed records")
+	var home: FlightScreen = SceneManager.screen_host.get_child(0)
+	check(home.tap_button.get_child(0).texture == FlightArt.texture("heart", "tap"), "Home uses different heart art")
+	# A home heart press starts fresh immediately; duplicate stale callbacks do not.
+	home.start_adventure()
+	var attempt := GameManager.run_attempt
+	home.start_adventure()
+	check(GameManager.run_attempt == attempt and GameManager.chapter == 0, "Home heart activated twice")
+	GameManager.start_shift()
+	GameManager.tap()
+	GameManager.upgrades = {"appointment": 2}
+	GameManager.relics = ["hoodie"]
+	GameManager.burst_clicks = 20
+	GameManager.main_menu()
+	check(results.recent.is_empty(), "Unfinished run entered completed history")
+	# Reload the active save and ledger, then boot the persistent hosts like a fresh launch.
+	SaveManager.load_data()
+	results.load_data()
+	SceneManager.show_screen("main_menu")
+	home = SceneManager.screen_host.get_child(0)
+	home.tap_button.pressed.emit()
+	check(GameManager.phase == "ready" and GameManager.days == 0 and GameManager.money == 0 and GameManager.upgrades.is_empty() and GameManager.relics.is_empty(), "Home restored unfinished progression")
+	check(GameManager.burst_clicks == 0 and GameManager.offers.is_empty() and GameManager.event_id.is_empty() and GameManager.chapter_days.is_empty(), "Fresh run retained temporary state")
+	finish_test_adventure([7, 7, 7])
+	check(results.recent.size() == 1 and results.best.total_days == 21 and GameManager.run_new_best, "First completion not recorded as best")
+	var completed := GameManager.snapshot()
+	GameManager.persist()
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and GameManager.completed_chapters.size() == 3, "Completed chapters lost on disk restore")
+	GameManager.record_completed_run()
+	GameManager.finish_story()
+	GameManager.restore(completed)
+	GameManager.record_completed_run()
+	check(results.recent.size() == 1, "Ending revisit duplicated result")
+	var loaded := FlightResults.new()
+	loaded.save_path = results.save_path
+	loaded.load_data()
+	check(loaded.recent == results.recent and loaded.best == results.best, "Results did not survive disk reload")
+	check(loaded.recent[0].chapter_days == [7, 7, 7] and not loaded.recent[0].completed_at.is_empty(), "Completed metadata missing")
+	finish_test_adventure([6, 6, 6])
+	var best_attempt: int = results.best.attempt
+	check(results.best.total_days == 18 and GameManager.run_new_best, "Faster adventure failed to update best")
+	for total: int in [24, 25, 26, 27, 28, 29]:
+		finish_test_adventure([8, 8, total - 16])
+		check(results.best.total_days == 18 and not GameManager.run_new_best, "Slower run replaced best")
+	check(results.recent.size() == 5 and results.recent[0].total_days == 29 and results.recent[4].total_days == 25, "History order or five-result limit incorrect")
+	check(results.best.attempt == best_attempt, "Best disappeared after leaving recent history")
+	GameManager.restore(completed)
+	GameManager.record_completed_run()
+	check(results.recent.size() == 5 and results.recent[0].total_days == 29, "Expired historical run recorded twice")
+	finish_test_adventure([6, 6, 6])
+	check(results.best.attempt == best_attempt and not GameManager.run_new_best, "Tied score incorrectly beat best")
+	results.load_data()
+	check(results.best.total_days == 18 and results.recent[0].total_days == 18, "Best/tie lost on reload")
+	GameManager.main_menu()
+	home = SceneManager.screen_host.get_child(0)
+	home.show_results()
+	await capture_view("results", 390)
+	home.show_home()
+	# First launch, best/history, and small-screen home checks in the same persistent host.
+	for dimensions: Vector2i in [Vector2i(320, 640), Vector2i(360, 640), Vector2i(390, 844), Vector2i(430, 932), Vector2i(1024, 768)]:
+		get_tree().root.size = dimensions
+		await capture_view("home_best", dimensions.x)
+		check(home.body.get_combined_minimum_size().y + 56 <= home.size.y, "Home requires unnecessary vertical scrolling")
+	get_tree().root.size = Vector2i(390, 844)
+	# Missing and corrupt ledger content never creates a fake completed run.
+	var scratch := FlightResults.new()
+	scratch.save_path = "/tmp/one_more_flight_results_invalid_tests.json"
+	DirAccess.remove_absolute(scratch.save_path)
+	scratch.load_data()
+	check(scratch.best.is_empty(), "Missing results generated a best")
+	var file := FileAccess.open(scratch.save_path, FileAccess.WRITE)
+	file.store_string("not json")
+	file.close()
+	scratch.load_data()
+	check(scratch.recent.is_empty() and scratch.best.is_empty(), "Corrupt results generated completed runs")
+	file = FileAccess.open(scratch.save_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"version": 1, "recent": [null, {"attempt": -1, "total_days": 0}], "best": "invalid", "next_attempt": -5}))
+	file.close()
+	scratch.load_data()
+	check(scratch.recent.is_empty() and scratch.best.is_empty() and scratch.next_attempt == 1, "Malformed results fields not validated")
+	DirAccess.remove_absolute(scratch.save_path)
+	GameManager.new_game()
+	check(results.best.total_days == 18 and results.recent.size() == 5, "New adventure erased completed records")
 	await get_tree().process_frame
