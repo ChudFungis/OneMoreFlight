@@ -160,13 +160,16 @@ func advance_time(delta: float) -> void:
 	if state != State.PLAYING or phase != "work":
 		return
 	var elapsed := minf(maxf(delta, 0), remaining)
+	var passive := (power("empire") + relic_power("postcard"))
+	var passive_rate := passive * base_income() * global_multiplier()
+	if passive_rate > 0:
+		elapsed = minf(elapsed, maxf(0, (goal() - money) / passive_rate))
 	since_tap = minf(100, since_tap + elapsed)
 	remaining = maxf(0, remaining - elapsed)
-	var passive := (power("empire") + relic_power("postcard"))
-	money += elapsed * passive * base_income() * global_multiplier()
+	money += elapsed * passive_rate
 	save_clock += elapsed
 	changed.emit()
-	if remaining <= 0:
+	if remaining <= 0 or money >= goal():
 		finish_shift()
 	elif save_clock >= 2.0:
 		save_clock = 0
@@ -200,11 +203,14 @@ func tap() -> float:
 	money += reward
 	earned.emit(reward)
 	changed.emit()
+	if money >= goal():
+		finish_shift()
 	return reward
 
 func finish_shift() -> void:
-	if phase != "work" or remaining > 0:
+	if phase != "work" or (remaining > 0 and money < goal()):
 		return
+	remaining = 0
 	days += 1
 	total_days += 1
 	money *= 1.0 + minf(power("jar"), 0.06)
@@ -286,7 +292,7 @@ func resolve_event(alternative: bool = false) -> void:
 		set_phase("transition")
 
 func _complete_chapter() -> bool:
-	# Only settled workdays can reach a milestone; never interrupt active tapping.
+	# Workdays settle once at timer expiry or immediately upon reaching the goal.
 	if phase not in ["work", "ready", "transition", "upgrades", "event"] or days <= 0 or money < goal() or chapter in completed_chapters:
 		return false
 	if phase == "work" and remaining > 0:
@@ -427,6 +433,8 @@ func restore(data: Dictionary) -> bool:
 			phase = "event" if pending_event else "transition"
 	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + minf(balance.playlist_extension_cap, balance.max_shift_extension - fixed_extension()))
 	save_clock = 0
+	if phase == "work" and money >= goal():
+		finish_shift()
 	# Older saves may be waiting for a manual trip after a settled workday.
 	if phase in ["ready", "upgrades", "event", "transition"]:
 		_complete_chapter()

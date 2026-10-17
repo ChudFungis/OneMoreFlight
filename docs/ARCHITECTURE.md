@@ -11,7 +11,7 @@ The original four autoloads and persistent `Main` scene remain. The renderer rem
 
 ## Campaign flow
 
-`transition → work → [milestone: story | upgrades → optional third-day event → transition]`. Workday earnings and interest settle before checking current savings against the discounted chapter goal. A reached milestone enters the story immediately and skips that day’s upgrade/event. Below-goal days retain the usual choices and schedule. A discount reward or event gift that reaches the milestone after work also enters the story immediately.
+`transition → work → [milestone: story | upgrades → optional third-day event → transition]`. A goal-reaching tap or passive payout immediately ends the current workday; otherwise it ends when the timer expires. Day counts and end-of-day interest settle once before chapter completion. A reached milestone enters the story immediately and skips that day’s upgrade/event. Below-goal days retain the usual choices and schedule. A discount reward or event gift that reaches the milestone after work also enters the story immediately.
 
 A reached milestone leads to `story → relic → transition` in the next chapter. Chapter 3 instead leads to `story → ending`. Completion is saved on the final trip; continuing during its story still shows that story. The internal restore API can still restore an ending for compatibility; the home screen deliberately offers only a fresh start.
 
@@ -53,7 +53,7 @@ The four original autoloads remain. No earnings, timer, reward eligibility, even
 
 ## Automatic savings milestones
 
-GameManager checks `_complete_chapter()` after finish_shift increments day counts and pays interest, before generating random offers/events. Active shifts cannot finish early, including a restored shift already above goal. Savings are a milestone, with no ticket deduction; the existing relic-choice transition clears all money, so excess never carries forward. Winning-day pending decisions are cleared before the story snapshot is saved. Story/relic/ending phases and completed-chapter IDs guard against duplicate transitions. The same per-run ledger guard still prevents duplicate personal-best entries.
+GameManager checks `_complete_chapter()` after finish_shift increments day counts and pays interest, before generating random offers/events. A goal-reaching tap/passive payout sets remaining time to zero and uses the same finish_shift settlement. Restoring an older active save already at its goal settles that unfinished day immediately. Savings are a milestone, with no ticket deduction; the existing relic-choice transition clears all money, so excess never carries forward. Winning-day pending decisions are cleared before the story snapshot is saved. Story/relic/ending phases and completed-chapter IDs guard against duplicate transitions. The same per-run ledger guard still prevents duplicate personal-best entries.
 
 Restore also advances older ready/upgrade/event snapshots whose settled workday already reached the goal, without adding a day or paying interest again. The obsolete buy_trip API and UI button are removed. The former ability expander has been replaced by always-visible Abilities/Keepsakes collections: flat icon/name rows wrap in a flow layout and open local item details. The redundant “Bonuses:” list and duplicated combo text were removed. Existing combo/burst indicators remain.
 
@@ -80,3 +80,5 @@ The gameplay savings HUD is presentation-only: FlightScreen reads savings and th
 ## Travel suitcase presentation
 
 FlightSuitcase is a reusable local VBoxContainer, not an autoload. It receives current upgrade/relic collections, builds deduplicated stable-ID icon buttons and emits item_inspected(item, relic). FlightScreen forwards that signal to its retained details modal. A bounded internal ScrollContainer keeps the collection compact. Deterministic artwork-only rotation and short entrance Tweens never consume GameManager RNG or alter hit rectangles. Case chrome is drawn from shared theme tokens; all item images still use FlightArt. No managers, gameplay Resources, save schema or scene entry points changed.
+
+FlightScreen and its tests explicitly preload the suitcase script as SUITCASE_COMPONENT. Creation and test casts therefore resolve directly from the script path, without depending on an editor class-name cache refresh for FlightSuitcase.

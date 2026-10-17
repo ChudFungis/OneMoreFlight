@@ -6,6 +6,8 @@ The three chapters, story, artwork paths, ordinary-upgrade resets and permanent 
 
 Confirmed rules: 10-second base workdays; one free reward per below-goal completed workday; three unique viable choices when available; 65% new / 35% owned level-up selection independently for each card, conditional on remaining candidates; exactly one event on below-goal chapter days 3, 6, 9, etc.; no event penalties or ordinary upgrade costs. Savings now act as milestones, without a manual ticket purchase. Events avoid consecutive repeats within a chapter.
 
+A workday now stops immediately when a tap or passive payout reaches the discounted goal, even with time remaining. Otherwise the timer ends it. End-of-day interest and day counts settle exactly once in either case.
+
 Order: settle work earnings and interest → check the discounted savings milestone. If reached, enter the story immediately and skip reward/event choices. Otherwise choose one reward → resolve the third-day event → automatic transition to the next workday. If a goal discount or event gift reaches the milestone after work, enter the story then. The event is selected at shift completion and saved alongside offers. Neither choice is rerolled by loading. Reward cards show NEW or the resulting LEVEL. Workday input, floating earnings, combo feedback, pause and autosave remain.
 
 The owner approved these gap resolutions: a shared +6-second extension cap; Cabrito can recur below 60 charges without a level cap; music has four levels; offer fewer than three cards if necessary; advance past the reward only when no candidates exist. Time abilities that cannot increase duration because fixed extensions already fill the cap are excluded.
@@ -50,13 +52,13 @@ Each event has two free positive outcomes. Gifts below are base-tap equivalents;
 
 ## Measured balance and concerns
 
-Seed 12345, selecting the first available preferred ability in order facetime/tips/love/appointment/empire/cafecito/flights, taking burst event alternatives and the first relic offer, completing chapters automatically at the settled milestone (winning-day choices skipped):
+Seed 12345, selecting the first available preferred ability in order facetime/tips/love/appointment/empire/cafecito/flights, taking burst event alternatives and the first relic offer, stopping work immediately at the goal-reaching payout and completing chapters automatically at the settled milestone (winning-day choices skipped):
 
 | Taps/sec | Denver / Italy / Future days | Active work |
 | --- | --- | --- |
-| 2 | 7 / 8 / 8 | 230 s |
-| 3 | 6 / 6 / 7 | 190 s |
-| 4 | 5 / 5 / 6 | 160 s |
+| 2 | 7 / 8 / 8 | 217.5 s |
+| 3 | 6 / 6 / 7 | 175.3 s |
+| 4 | 5 / 5 / 6 | 143.8 s |
 
 These accelerated simulations use the real rules; they do not measure human 10–15 minute session pacing. Later chapters at faster tapping rates fall below provisional 7–9 / 9–12 day targets. Milestone rewards plus permanent relics produce substantial scaling despite lower passive income and interest. Goals have deliberately not been retuned. The shared time cap makes some time builds mutually redundant; exclusion avoids offering fully ineffective additional time levels. Cabrito level labels count acquisitions, while its effect remains a fixed refill. Human testing and additional seeds are needed before locking balance.
 

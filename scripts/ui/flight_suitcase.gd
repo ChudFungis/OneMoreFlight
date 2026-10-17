@@ -9,17 +9,10 @@ var scroll: ScrollContainer
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 4)
-	var lid := Label.new()
-	lid.text = "PACKED MEMORIES"
-	lid.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lid.custom_minimum_size.y = 20
-	lid.add_theme_font_override("font", FlightStyle.FONT_SEMIBOLD)
-	lid.add_theme_font_size_override("font_size", 12)
-	lid.add_theme_color_override("font_color", FlightStyle.BURGUNDY)
-	var lid_margin := MarginContainer.new()
-	lid_margin.add_theme_constant_override("margin_top", 8)
-	add_child(lid_margin)
-	lid_margin.add_child(lid)
+	var lid_space := Control.new()
+	lid_space.custom_minimum_size.y = 28
+	lid_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(lid_space)
 	var margins := MarginContainer.new()
 	for side: String in ["left", "right"]:
 		margins.add_theme_constant_override("margin_" + side, 12)
@@ -36,6 +29,11 @@ func _ready() -> void:
 	resized.connect(queue_redraw)
 
 func populate(upgrades: Dictionary, relics: Array) -> void:
+	# Replacing contents must remove stale buttons and empty-state decorations.
+	for child: Node in contents.get_children():
+		contents.remove_child(child)
+		child.queue_free()
+	item_buttons.clear()
 	for folder: String in ["upgrades", "relics"]:
 		var flow := HFlowContainer.new()
 		flow.add_theme_constant_override("h_separation", 6)

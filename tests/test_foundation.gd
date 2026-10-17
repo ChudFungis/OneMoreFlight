@@ -1,4 +1,5 @@
 extends Node
+const SUITCASE_COMPONENT = preload("res://scripts/ui/flight_suitcase.gd")
 ## No dependencies. Save isolation is installed before any game action.
 var failures: int = 0
 var checks: int = 0
@@ -50,6 +51,7 @@ func run_checks() -> void:
 	await capture_view("main_menu", 390)
 	await check_home_results()
 	await check_milestones()
+	await check_immediate_goals()
 	GameManager.new_game()
 	check(GameManager.phase == "transition" and GameManager.money == 0, "New game did not reset")
 	GameManager.start_shift()
@@ -614,10 +616,9 @@ func check_milestones() -> void:
 		GameManager.money = target / 1.02 - 1
 		GameManager.start_shift()
 		GameManager.tap()
-		GameManager.money = target + 25
 		var working := GameManager.snapshot()
-		check(GameManager.restore(working) and GameManager.phase == "work", "Load completed a still-active workday")
-		GameManager.money = target / 1.02 + (100 if chapter_index == 1 else 0)
+		check(GameManager.restore(working) and GameManager.phase == "work", "Load completed a below-goal active workday")
+		GameManager.money = target / 1.02
 		GameManager.finish_shift()
 		check(GameManager.phase == "work" and GameManager.days == 2, "Workday completed before timer expired")
 		GameManager.advance_time(GameManager.remaining - 0.1)
@@ -625,7 +626,7 @@ func check_milestones() -> void:
 		GameManager.advance_time(0.1)
 		check(GameManager.phase == "story" and GameManager.days == 3, "Settled interest did not trigger milestone")
 		check(GameManager.offers.is_empty() and GameManager.event_id.is_empty() and not GameManager.pending_event, "Winning day showed upgrade/event")
-		check(is_equal_approx(GameManager.money, target + (102 if chapter_index == 1 else 0)), "Milestone deducted savings or interest incorrect")
+		check(is_equal_approx(GameManager.money, target), "Milestone deducted savings or interest incorrect")
 		var saved := GameManager.snapshot()
 		GameManager.finish_shift()
 		GameManager.advance_time(20)
@@ -688,6 +689,16 @@ func collect_labels(node: Node) -> String:
 func check_collection_ui() -> void:
 	GameManager.new_game()
 	var empty_screen: FlightScreen = SceneManager.screen_host.get_child(0)
+	var refresh_case := SUITCASE_COMPONENT.new()
+	add_child(refresh_case)
+	refresh_case.populate({"love": 2}, ["passport"])
+	refresh_case.populate({"tips": 1}, [])
+	check(refresh_case.item_buttons.size() == 1 and refresh_case.item_buttons.has("upgrades/tips"), "Repopulating retained stale suitcase items")
+	check(refresh_case.contents.get_child_count() == 2, "Repopulating duplicated compartments")
+	refresh_case.populate({}, [])
+	check(refresh_case.item_buttons.is_empty() and refresh_case.contents.get_child_count() == 3, "Empty refresh retained stale icons or decorations")
+	remove_child(refresh_case)
+	refresh_case.queue_free()
 	check(empty_screen.item_rows.is_empty() and not collect_labels(empty_screen.item_lists).contains("None yet"), "Empty suitcase leaked a list row")
 	await capture_view("suitcase_empty", 390)
 	GameManager.start_shift()
@@ -695,7 +706,7 @@ func check_collection_ui() -> void:
 	var earned_id: String = GameManager.offers[0]
 	GameManager.buy_upgrade(earned_id)
 	check(empty_screen.item_rows.size() == 1 and empty_screen.item_rows.has("upgrades/" + earned_id), "Earned ability did not enter suitcase")
-	check((empty_screen.item_lists as FlightSuitcase).fresh_items.has("upgrades/" + earned_id), "New collectible did not receive entrance feedback")
+	check((empty_screen.item_lists as SUITCASE_COMPONENT).fresh_items.has("upgrades/" + earned_id), "New collectible did not receive entrance feedback")
 	await capture_view("suitcase_ability", 390)
 	GameManager.upgrades = {}
 	GameManager.relics = ["passport"]
@@ -718,7 +729,11 @@ func check_collection_ui() -> void:
 	GameManager.persist()
 	SaveManager.load_data()
 	check(GameManager.restore(SaveManager.progression), "Suitcase fixture did not restore")
-	check(screen.item_rows.size() == 5 and screen.item_rows.keys() == saved_keys, "Save/load lost or duplicated collection icons")
+	screen.rebuild()
+	var restored_keys: Array = screen.item_rows.keys()
+	saved_keys.sort()
+	restored_keys.sort()
+	check(screen.item_rows.size() == 5 and restored_keys == saved_keys, "Save/load lost or duplicated collection icons")
 	var before := GameManager.snapshot()
 	screen.item_rows["upgrades/love"].pressed.emit()
 	var modal: FlightItemDetails = SceneManager.overlay_host.get_child(0)
@@ -764,7 +779,7 @@ func check_collection_ui() -> void:
 	GameManager.set_phase("ready")
 	await capture_view("collection_full", 360)
 	check(screen.item_rows.size() == FlightCatalog.UPGRADES.size() + FlightCatalog.RELICS.size(), "Suitcase duplicated or omitted catalog items")
-	var suitcase := screen.item_lists as FlightSuitcase
+	var suitcase := screen.item_lists as SUITCASE_COMPONENT
 	check(suitcase.scroll.size.y <= 128 and suitcase.contents.size.y > suitcase.scroll.size.y, "Large suitcase did not use compact scroll overflow")
 	suitcase.scroll.scroll_vertical = int(suitcase.scroll.get_v_scroll_bar().max_value)
 	await get_tree().process_frame
@@ -924,10 +939,10 @@ func check_savings_hud() -> void:
 	await capture_view("savings", 390)
 	GameManager.money = GameManager.goal() - 1
 	screen.refresh()
-	var remaining := GameManager.remaining
-	GameManager.tap()
+	# Preview the capped HUD without an earnings action; real earnings now end work.
+	GameManager.money = GameManager.goal()
+	screen.refresh()
 	check(screen.progress_target == 100 and screen.hud_goal_reached, "HUD did not celebrate goal crossing")
-	check(GameManager.phase == "work" and GameManager.remaining == remaining, "HUD interrupted active workday")
 	await capture_view("savings_goal", 390)
 	var before := GameManager.snapshot()
 	screen.refresh()
@@ -955,3 +970,46 @@ func capture_modal_if_suitcase(screen: FlightScreen) -> void:
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("/tmp/omf_suitcase_scrolled.png")
 	check(screen.item_lists.visible, "Scrolling hid the suitcase")
+
+func check_immediate_goals() -> void:
+	GameManager.new_game()
+	for chapter_index: int in range(3):
+		GameManager.apply_upgrade(item("flights"))
+		GameManager.apply_upgrade(item("jar"))
+		GameManager.start_shift()
+		GameManager.money = GameManager.goal() - 1
+		var target := GameManager.goal()
+		var reward := GameManager.tap()
+		check(reward > 0 and GameManager.phase == "story" and GameManager.remaining == 0, "Goal tap did not immediately enter story")
+		check(GameManager.days == 1 and GameManager.total_days == chapter_index + 1, "Early completion counted incorrect days")
+		check(is_equal_approx(GameManager.money, (target - 1 + reward) * 1.02), "Early completion changed earnings or paid interest incorrectly")
+		check(GameManager.offers.is_empty() and not GameManager.pending_event, "Early completion offered rewards/events")
+		var settled := GameManager.snapshot()
+		check(GameManager.tap() == 0, "Tap after winning earned extra money")
+		GameManager.finish_shift()
+		GameManager.advance_time(100)
+		SaveManager.load_data()
+		check(GameManager.restore(SaveManager.progression), "Early completion did not restore")
+		var restored := GameManager.snapshot()
+		for key: String in settled:
+			if settled[key] is float or settled[key] is int:
+				check(is_equal_approx(float(restored[key]), float(settled[key])), "Early completion save mismatch: " + key)
+			else:
+				check(restored[key] == settled[key], "Early completion save mismatch: " + key)
+		GameManager.finish_story()
+		if chapter_index < 2:
+			GameManager.choose_relic(GameManager.offers[0])
+			check(GameManager.money == 0 and GameManager.days == 0, "Early completion carried excess money")
+	check(GameManager.complete and SaveManager.results.recent[0].total_days == 3 and SaveManager.results.recent[0].chapter_days == [1, 1, 1], "Early final completion recorded wrong personal best")
+	GameManager.new_game()
+	GameManager.apply_upgrade(item("empire"))
+	GameManager.start_shift()
+	GameManager.money = GameManager.goal() - 1
+	GameManager.advance_time(5)
+	check(GameManager.phase == "story" and GameManager.days == 1 and is_equal_approx(GameManager.money, GameManager.goal()), "Passive goal did not settle at the crossing")
+	GameManager.new_game()
+	GameManager.start_shift()
+	GameManager.money = GameManager.goal()
+	var legacy_work := GameManager.snapshot()
+	check(GameManager.restore(legacy_work) and GameManager.phase == "story" and GameManager.days == 1, "Above-goal active save did not settle")
+	await get_tree().process_frame

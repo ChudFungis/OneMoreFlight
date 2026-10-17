@@ -1,6 +1,7 @@
 class_name FlightScreen
 extends Control
 ## Shared mobile layout helpers. Rules remain in GameManager.
+const SUITCASE_COMPONENT = preload("res://scripts/ui/flight_suitcase.gd")
 const STORY = preload("res://resources/story.tres")
 const WORKDAY_TRANSITION_SECONDS := 0.4
 @export var view: String = "main_menu"
@@ -394,7 +395,7 @@ func restart_adventure() -> void:
 	GameManager.new_game()
 
 func build_item_lists() -> void:
-	var suitcase := FlightSuitcase.new()
+	var suitcase := SUITCASE_COMPONENT.new()
 	var current: Dictionary = {}
 	for id: String in GameManager.upgrades:
 		current["upgrades/" + id] = GameManager.count(id)
