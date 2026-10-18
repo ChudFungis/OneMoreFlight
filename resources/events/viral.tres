@@ -4,12 +4,7 @@
 script = ExtResource("1")
 id = "viral"
 title = "Un Chico Serio"
-description = "Dany's family calls Josh 'un chico serio.' Meanwhile, he's wearing sunglasses indoors and debating domino rules.\nVery serious: +12 base-tap equivalents; Tell the truth: +20 double-earnings tap charges."
-choice = "Very serious"
+description = "The family decides Josh really is un chico serio. They chip in toward the next trip."
 effect = "gift"
-amount = 12
-alternative = "Tell the truth"
-alternative_effect = "burst"
-alternative_amount = 20
-price = 0
+amount = 25
 negative = false

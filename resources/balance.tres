@@ -4,5 +4,4 @@
 script = ExtResource("1")
 shift_seconds = 10.0
 event_interval = 3
-burst_cap = 60
 new_ability_weight = 0.65

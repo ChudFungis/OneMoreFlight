@@ -4,12 +4,7 @@
 script = ExtResource("1")
 id = "rain"
 title = "The Domino Incident"
-description = "A family domino game has become unexpectedly competitive.\nPlay carefully: +8 base-tap equivalents; Make a dramatic play: +18 double-earnings tap charges."
-choice = "Play carefully"
+description = "The family domino game gets competitive. Dany wins—and collects her winnings."
 effect = "gift"
-amount = 8
-alternative = "Make a dramatic play"
-alternative_effect = "burst"
-alternative_amount = 18
-price = 0
+amount = 20
 negative = false
