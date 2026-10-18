@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 id = "passport"
-title = "Heart-Stamped Passport"
-description = "Every stamp is one flight closer to being together.\n-12% future travel goals while owned."
+title = "Lip-Stained Passport"
+description = "A kiss for every goodbye.\nTickets cost 12% less."
 effect = "discount"
 amount = 0.12
