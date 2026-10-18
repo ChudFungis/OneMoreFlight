@@ -143,3 +143,13 @@ Replaced the unlimited keepsake's tenth-tap payout with a 25% chance of one extr
 Godot 4.7.2 headless suite passes 11,557 checks with zero failures. The new deterministic chance trial produced 105 bonuses / 400 selections. Tests cover successful grants, unchanged direct grants, no-keepsake behavior, duplicate confirms, disk restore, the removed tenth-tap payout and compounded discounts. Existing day-end animation, framed HUD, nine-ability roster and local score checks pass. Only intentional corrupt-save/results warnings remain.
 
 Updated seeded simulations (same preference order, existing event choices, first offered keepsake): 2 taps/sec completes [5,9,8] chapter days / 212.5 active seconds; 3 taps/sec [5,7,7] / 171.3 seconds; 4 taps/sec [4,6,6] / 160.0 seconds. These are simulated, not measured human session lengths. Physical phone playtesting remains required. GitHub's release workflow independently repeats clean import, tests and Web export before deploying.
+
+## Automatic positive/negative events (snapshot v5)
+
+The eight existing events now have one fixed automatic outcome: four positive and four negative. No alternate outcomes or temporary tap-charge code remains. GameManager applies/persists the result before the event UI is revealed; the only outcome control is Continue, alongside normal Pause/Save navigation. Positive gifts receive the earnings multiplier; penalties do not and cannot exceed savings. Extra workday seconds and multiplicative ticket discounts persist within a chapter and reset at the next one. Winning events remain visible until acknowledged.
+
+Godot 4.7.2 headless regression passes 11,636 checks with zero failures. Tests cover all eight exact outcomes, one Continue button, redraw/reload idempotency, repeated acknowledgement, no debt at low/zero balances, stacking event/ability/keepsake discounts, lasting time, chapter resets, winning-event reload/acknowledgement and legacy v4 choice migration with discarded boost charges. Existing chance, nine-ability, local-result, layout and navigation checks remain. Only the intentional corrupt-save/results warnings are present.
+
+Current single-seed full-campaign simulations: 2 taps/sec completes [5,9,8] chapter days / 214.5 active seconds; 3 taps/sec [5,7,7] / 179.3 seconds; 4 taps/sec [5,6,6] / 156.5 seconds. These use the real rules and automatic events; they are not human pacing measurements. Goals/ability amounts were not retuned.
+
+New native screenshots and physical mobile-browser checks are not claimed because graphical launch is unavailable in this session. The existing headless portrait/desktop layout checks still run. GitHub's PR workflow independently verifies clean import, tests and single-thread Web export before the approved release.

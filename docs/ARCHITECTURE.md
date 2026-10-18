@@ -1,6 +1,6 @@
 # Gameplay architecture
 
-Current ability rules are documented in docs/GAME_DESIGN.md. Earlier version sections below are historical where they describe combo, consumable Cabrito, capped time or old interest.
+Current ability rules are documented in docs/GAME_DESIGN.md. Earlier version sections below are historical where they describe combo, consumable Cabrito, capped time, old interest, event options or temporary event charges.
 
 The original four autoloads and persistent `Main` scene remain. The renderer remains Compatibility. No dependency or global event bus was added.
 
@@ -96,3 +96,7 @@ Ability Resource filenames now match current display titles (see docs/ARTWORK.md
 A work → upgrades signal now passes through FlightScreen's local one-second day-end animation. GameManager stays in its already-persisted upgrades phase throughout. No new campaign phase/save schema is added. The scene-bound Tween pauses with gameplay, is cancelled on an unrelated rebuild, and only reveals UI. Winning workdays retain the direct story transition.
 
 FlightScreen.build_savings_hud can render the shared framed values with or without a progress bar and optional completed-workday click total. The ability reward view reuses it and the existing suitcase below its confirmation button. All displayed values come from GameManager; no new counters or persistence fields were added.
+
+## Automatic event outcomes (snapshot v5)
+
+GameManager.set_phase applies an event before saving/emitting its reveal. apply_event is guarded by event_applied and records readable event_result text; it never runs from a UI render. Continue clears the pending event and then advances to work or a milestone story. Restore applies an unprocessed legacy pending event and immediately persists it; already-applied v5 outcomes remain visible without replay. The chapter_event_seconds and chapter_event_discount accumulators survive days/saves and reset on chapter change. Ticket restore composes event and ability discounts. Boosted-tap state/logic and alternate event fields are removed; old boost fields are ignored. No new autoload, campaign phase or online dependency is added.

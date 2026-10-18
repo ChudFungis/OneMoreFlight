@@ -68,7 +68,7 @@ func run_checks() -> void:
 	check(get_tree().paused and SceneManager.overlay_host.get_child(0).view == "pause_menu", "Settings lost pause context")
 	SceneManager.resume_run()
 	GameManager.apply_upgrade(item("cabrito"))
-	check(GameManager.count("cabrito") == 1 and GameManager.burst_clicks == 0, "Cabrito should be permanent, not a refill")
+	check(GameManager.count("cabrito") == 1, "Cabrito should be permanent, not a refill")
 	check(is_equal_approx(GameManager.critical_chance(1), 0.1) and is_equal_approx(GameManager.critical_chance(2), 0.19), "Cabrito diminishing chance progression failed")
 	GameManager.upgrades = {}
 	GameManager.apply_upgrade(item("facetime"))
@@ -112,7 +112,6 @@ func run_checks() -> void:
 	check(not GameManager.buy_upgrade(id), "Offer purchased twice")
 	check(GameManager.money == reward_money, "Free reward changed savings")
 	GameManager.upgrades = {}
-	GameManager.burst_clicks = 0
 	GameManager.goal_multiplier = 1
 	GameManager.phase = "ready"
 	GameManager.apply_upgrade(item("team"))
@@ -146,15 +145,17 @@ func run_checks() -> void:
 	SaveManager.settings["music_volume"] = 1.0
 	SaveManager.load_data()
 	check(is_equal_approx(SaveManager.settings["music_volume"], 0.23), "Audio settings did not persist")
-	# Every event and alternate is resolvable without entering active clicking.
+	# Events settle immediately on reveal; Continue only acknowledges the result.
 	for event: FlightDefinition in FlightCatalog.EVENTS:
-		for alternate: bool in [false, true]:
-			GameManager.phase = "event"
-			GameManager.event_id = event.id
-			GameManager.money = 1000
-			GameManager.resolve_event(alternate)
-			check(GameManager.phase == "transition" and GameManager.money >= 1000, "Event failed: " + event.id)
+		GameManager.event_id = event.id
+		GameManager.event_applied = false
+		GameManager.money = 1000
+		GameManager.set_phase("event")
+		check(GameManager.event_applied, "Event did not apply on reveal: " + event.id)
+		GameManager.resolve_event()
+		check(GameManager.phase == "transition", "Event acknowledgement failed: " + event.id)
 	await check_redesign()
+	await check_automatic_events()
 	await check_biggest_fan()
 	# Save/load preserves the exact decision and offers, not just a chapter index.
 	GameManager.phase = "relic"
@@ -233,7 +234,7 @@ func simulate_game(rate: int) -> void:
 					var before_step := GameManager.remaining
 					GameManager.advance_time(1.0 / rate)
 					work_seconds += minf(1.0 / rate, before_step)
-			"event": GameManager.resolve_event(true)
+			"event": GameManager.resolve_event()
 			"upgrades":
 				var chosen: String = GameManager.offers[0]
 				for preferred: String in ["facetime", "tips", "love", "appointment", "jar", "team", "flights"]:
@@ -322,22 +323,6 @@ func check_redesign() -> void:
 			var paid := GameManager.money
 			GameManager.resolve_event()
 			check(GameManager.money == paid and GameManager.phase == "transition", "Event paid twice")
-	# All positive outcomes, with exact amplifier and charge rounding.
-	for event: FlightDefinition in FlightCatalog.EVENTS:
-		for alternate: bool in [false, true]:
-			GameManager.upgrades = {}
-			GameManager.relics = ["bracelet"]
-			GameManager.money = 100
-			GameManager.burst_clicks = 0
-			GameManager.phase = "event"
-			GameManager.event_id = event.id
-			var effect := event.alternative_effect if alternate else event.effect
-			var amount := event.alternative_amount if alternate else event.amount
-			GameManager.resolve_event(alternate)
-			if effect == "gift":
-				check(is_equal_approx(GameManager.money, 100 + amount * 5 * 1.15), "Event gift/amplifier failed: " + event.id)
-			else:
-				check(GameManager.money == 100 and GameManager.burst_clicks == int(ceilf(amount)), "Event burst/amplifier failed: " + event.id)
 	# Safe legacy migration retains campaign, IDs, relics and decision.
 	var legacy := GameManager.snapshot()
 	legacy.game_version = 1
@@ -347,7 +332,7 @@ func check_redesign() -> void:
 	legacy.burst_clicks = 200
 	legacy.shields = 3
 	check(GameManager.restore(legacy), "Legacy save rejected")
-	check(GameManager.remaining <= 11 and GameManager.count("appointment") == 99 and GameManager.burst_clicks == 60, "Legacy bounds migration failed")
+	check(GameManager.remaining <= 11 and GameManager.count("appointment") == 99 and not GameManager.snapshot().has("burst_clicks"), "Legacy bounds migration failed")
 	legacy.phase = "upgrades"
 	legacy.offers = ["appointment", "facetime", "tips"]
 	check(GameManager.restore(legacy) and GameManager.offers == ["appointment", "facetime", "tips"], "Legacy shop migration failed")
@@ -531,7 +516,6 @@ func check_home_results() -> void:
 	GameManager.tap()
 	GameManager.upgrades = {"appointment": 2}
 	GameManager.relics = ["hoodie"]
-	GameManager.burst_clicks = 20
 	GameManager.main_menu()
 	check(results.recent.is_empty(), "Unfinished run entered completed history")
 	# Reload the active save and ledger, then boot the persistent hosts like a fresh launch.
@@ -541,7 +525,7 @@ func check_home_results() -> void:
 	home = SceneManager.screen_host.get_child(0)
 	home.tap_button.pressed.emit()
 	check(GameManager.phase == "transition" and GameManager.days == 0 and GameManager.money == 0 and GameManager.upgrades.is_empty() and GameManager.relics.is_empty(), "Home restored unfinished progression")
-	check(GameManager.burst_clicks == 0 and GameManager.offers.is_empty() and GameManager.event_id.is_empty() and GameManager.chapter_days.is_empty(), "Fresh run retained temporary state")
+	check(GameManager.offers.is_empty() and GameManager.event_id.is_empty() and GameManager.chapter_days.is_empty(), "Fresh run retained temporary state")
 	finish_test_adventure([7, 7, 7])
 	check(results.recent.size() == 1 and results.best.total_days == 21 and GameManager.run_new_best, "First completion not recorded as best")
 	var completed := GameManager.snapshot()
@@ -666,8 +650,8 @@ func check_milestones() -> void:
 	GameManager.days = 2
 	GameManager.total_days = 2
 	GameManager.money = GameManager.goal() - 1
-	GameManager.phase = "event"
-	GameManager.event_id = "call"
+	GameManager.event_id = "rain"
+	GameManager.set_phase("event")
 	GameManager.resolve_event()
 	check(GameManager.phase == "story", "Event gift did not auto-complete settled day")
 	# Old manual-purchase saves with a reached milestone must not be stranded.
@@ -842,10 +826,10 @@ func check_seamless_flow() -> void:
 			GameManager.persist()
 			SaveManager.load_data()
 			check(GameManager.restore(SaveManager.progression) and GameManager.event_id == event, "Event rerolled on reload")
-			GameManager.resolve_event(true)
-			var charges := GameManager.burst_clicks
-			GameManager.resolve_event(true)
-			check(GameManager.phase == "transition" and GameManager.burst_clicks == charges, "Event paid twice")
+			GameManager.resolve_event()
+			var settled_money := GameManager.money
+			GameManager.resolve_event()
+			check(GameManager.phase == "transition" and GameManager.money == settled_money, "Event paid twice")
 		# Keep this scheduling test below goals, independently of reward RNG.
 		GameManager.money = 0
 		GameManager.upgrades = {}
@@ -878,7 +862,7 @@ func check_seamless_flow() -> void:
 				GameManager.buy_upgrade(selected)
 				check(GameManager.phase == ("event" if day == 3 else "transition"), "Chapter-local event schedule did not reset")
 				if day == 3:
-					GameManager.resolve_event(true)
+					GameManager.resolve_event()
 		GameManager.finish_story()
 		if chapter_index < 2:
 			GameManager.choose_relic(GameManager.offers[0])
@@ -890,10 +874,9 @@ func check_seamless_flow() -> void:
 	GameManager.advance_time(GameManager.remaining)
 	GameManager.offers = ["cabrito"]
 	GameManager.buy_upgrade("cabrito")
-	var kept_charges := GameManager.burst_clicks
 	GameManager.nicky_growth = 0.2
 	GameManager.start_shift()
-	check(GameManager.burst_clicks == kept_charges and GameManager.nicky_growth == 0.2 and GameManager.remaining == 10 and GameManager.count("cabrito") == 1, "Automatic next shift changed temporary-bonus reset rules")
+	check(GameManager.nicky_growth == 0.2 and GameManager.remaining == 10 and GameManager.count("cabrito") == 1, "Automatic next shift changed temporary-bonus reset rules")
 	# Pause during the handoff retains the full next workday.
 	GameManager.new_game()
 	GameManager.set_process(true)
@@ -1127,7 +1110,7 @@ func check_permanent_abilities() -> void:
 		if GameManager.tap() == 10:
 			doubles += 1
 	check(doubles > 850 and doubles < 1150, "Cabrito chance distribution incorrect")
-	check(GameManager.count("cabrito") == 1 and GameManager.burst_clicks == 0, "Cabrito depleted or created charges")
+	check(GameManager.count("cabrito") == 1, "Cabrito depleted or created charges")
 	saved = GameManager.snapshot()
 	var expected: Array = []
 	for trial: int in range(20):
@@ -1170,3 +1153,131 @@ func check_permanent_abilities() -> void:
 	check(GameManager.count("cabrito") == 1 and GameManager.nicky_growth == 0 and GameManager.offers.size() == 3, "Legacy refill/offer migration incorrect")
 	GameManager.new_game()
 	await get_tree().process_frame
+
+func check_automatic_events() -> void:
+	var positives := 0
+	var negatives := 0
+	for event: FlightDefinition in FlightCatalog.EVENTS:
+		GameManager.new_game()
+		GameManager.days = 3
+		GameManager.total_days = 3
+		GameManager.money = 1000
+		GameManager.relics = ["bracelet"]
+		GameManager.pending_event = true
+		GameManager.event_id = event.id
+		var before_goal := GameManager.goal()
+		GameManager.set_phase("event")
+		if event.negative:
+			negatives += 1
+		else:
+			positives += 1
+		match event.effect:
+			"gift": check(is_equal_approx(GameManager.money, 1000 + event.amount * 5 * 1.15), "Event gift failed: " + event.id)
+			"loss": check(is_equal_approx(GameManager.money, 1000 - event.amount * 5), "Earnings keepsake amplified penalty: " + event.id)
+			"chapter_time": check(GameManager.chapter_event_seconds == 1 and GameManager.fixed_extension() == 1 and GameManager.money == 1000, "Call did not add lasting workday time")
+			"ticket_discount": check(is_equal_approx(GameManager.goal(), before_goal * 0.97) and GameManager.money == 1000, "Language event discount incorrect")
+		check(GameManager.phase == "event" and GameManager.event_applied and not GameManager.event_result.is_empty(), "Event revealed without settled result")
+		var settled := GameManager.snapshot()
+		var screen: FlightScreen = SceneManager.screen_host.get_child(0)
+		var text := collect_labels(screen)
+		check(text.contains(GameManager.event_result), "Event result missing from screen")
+		check(event_button_count(screen) == 1, "Event still offers a choice")
+		screen.rebuild()
+		check(GameManager.snapshot() == settled, "Rebuilding reapplied event")
+		SaveManager.load_data()
+		check(GameManager.restore(SaveManager.progression), "Applied event did not restore")
+		check(GameManager.money == settled.money and GameManager.chapter_event_seconds == settled.chapter_event_seconds and is_equal_approx(GameManager.goal_multiplier, settled.goal_multiplier) and GameManager.event_result == settled.event_result, "Reload reapplied or lost event outcome")
+		check(not GameManager.apply_event(), "Already-applied event paid twice")
+		GameManager.resolve_event()
+		var acknowledged := GameManager.snapshot()
+		GameManager.resolve_event()
+		check(GameManager.snapshot() == acknowledged and GameManager.last_event_id == event.id, "Repeated Continue changed event outcome")
+	check(positives == 4 and negatives == 4, "Expected four positive and four negative events")
+	# Losses floor at zero and never create debt, including after reload.
+	GameManager.new_game()
+	GameManager.money = 1
+	GameManager.days = 3
+	GameManager.event_id = "repair"
+	GameManager.set_phase("event")
+	check(GameManager.money == 0 and GameManager.event_result == "−$1.00 savings", "Penalty exceeded current savings")
+	GameManager.resolve_event()
+	GameManager.money = 0
+	GameManager.event_id = "sale"
+	GameManager.set_phase("event")
+	check(GameManager.money == 0 and GameManager.event_result == "No savings lost", "Zero-balance event created debt")
+	# Time bonuses persist across workdays and stack, then reset with the chapter.
+	GameManager.new_game()
+	GameManager.days = 3
+	GameManager.event_id = "call"
+	GameManager.set_phase("event")
+	GameManager.resolve_event()
+	GameManager.apply_upgrade(item("team"))
+	GameManager.start_shift()
+	check(GameManager.remaining == 12, "Event time did not stack with Well Rested")
+	GameManager.remaining = 0
+	GameManager.finish_shift()
+	GameManager.offers = ["appointment"]
+	GameManager.buy_upgrade("appointment")
+	GameManager.start_shift()
+	check(GameManager.remaining == 12, "Event time expired next workday")
+	GameManager.event_applied = false
+	GameManager.event_id = "call"
+	GameManager.set_phase("event")
+	check(GameManager.chapter_event_seconds == 2, "Repeat call did not stack chapter bonus")
+	# Event price reductions coexist with both discount sources across JSON saves.
+	GameManager.new_game()
+	GameManager.days = 3
+	GameManager.apply_upgrade(item("flights"))
+	GameManager.relics = ["passport"]
+	GameManager.event_id = "gift"
+	GameManager.set_phase("event")
+	check(is_equal_approx(GameManager.goal(), 2100 * 0.92 * 0.97 * 0.88), "Event/Volaris/Passport discounts did not stack")
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and is_equal_approx(GameManager.goal(), 2100 * 0.92 * 0.97 * 0.88), "Event discount lost on disk reload")
+	GameManager.phase = "relic"
+	GameManager.offers = ["hoodie"]
+	GameManager.choose_relic("hoodie")
+	check(GameManager.chapter_event_seconds == 0 and GameManager.chapter_event_discount == 1, "Chapter event effects carried into next chapter")
+	# Show a winning event's result before moving to its reunion story.
+	GameManager.new_game()
+	GameManager.days = 3
+	GameManager.total_days = 3
+	GameManager.money = GameManager.goal() - 1
+	GameManager.event_id = "viral"
+	GameManager.set_phase("event")
+	check(GameManager.phase == "event" and GameManager.money >= GameManager.goal(), "Winning event skipped its result")
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and GameManager.phase == "event", "Reload skipped winning event acknowledgement")
+	GameManager.resolve_event()
+	check(GameManager.phase == "story" and GameManager.days == 3, "Continue did not finish event-winning chapter")
+	# Pending old choice saves migrate to the new single outcome and persist once.
+	GameManager.new_game()
+	var old := GameManager.snapshot()
+	old.game_version = 4
+	old.phase = "event"
+	old.days = 3
+	old.total_days = 3
+	old.money = 500
+	old.event_id = "repair"
+	old.pending_event = true
+	old.burst_clicks = 40
+	check(GameManager.restore(old) and GameManager.money == 400 and GameManager.event_applied, "Legacy choice did not migrate to one loss")
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and GameManager.money == 400 and not GameManager.snapshot().has("burst_clicks"), "Legacy event reapplied or retained boosted charges")
+	# Uniform catalog selection gives roughly equal positive/negative frequency.
+	GameManager.rng.seed = 881122
+	var positive_draws := 0
+	for trial: int in range(4000):
+		var id: String = GameManager.random_ids(FlightCatalog.EVENTS, 1)[0]
+		if not FlightCatalog.find_item(FlightCatalog.EVENTS, id).negative:
+			positive_draws += 1
+	check(positive_draws > 1850 and positive_draws < 2150, "Event polarity distribution outside expected range")
+	GameManager.new_game()
+	await get_tree().process_frame
+
+func event_button_count(node: Node) -> int:
+	# Pause/Save is navigation, not an event outcome option.
+	var count := 1 if node is Button and node.text != "Pause / Save" else 0
+	for child: Node in node.get_children():
+		count += event_button_count(child)
+	return count

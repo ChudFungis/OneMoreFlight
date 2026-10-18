@@ -4,12 +4,7 @@
 script = ExtResource("1")
 id = "dinner"
 title = "One More Episode"
-description = "You were supposed to go to sleep an hour ago. Somehow, you're starting another episode.\nGo to sleep: +8 base-tap equivalents; Watch one more: +15 double-earnings tap charges."
-choice = "Go to sleep"
-effect = "gift"
-amount = 8
-alternative = "Watch one more"
-alternative_effect = "burst"
-alternative_amount = 15
-price = 0
-negative = false
+description = "One more episode becomes three. So does the late-night snack order."
+effect = "loss"
+amount = 15
+negative = true

@@ -26,7 +26,6 @@ var tap_button: Button
 var toast: Label
 var tap_tween: Tween
 var heart_image: TextureRect
-var effects_label: Label
 var selected_id: String = ""
 var selection_cards: Dictionary = {}
 var confirm_button: Button
@@ -98,7 +97,6 @@ func rebuild() -> void:
 	decision_locked = false
 	choice_grid = null
 	heart_image = null
-	effects_label = null
 	if progress_tween != null:
 		progress_tween.kill()
 	if savings_tween != null:
@@ -402,8 +400,6 @@ func build_game() -> void:
 			tap_button.disabled = GameManager.phase != "work"
 			var hint := label_text("Tap a little love into the travel fund", 15, FlightStyle.MUTED)
 			hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			effects_label = label_text("", 15, FlightStyle.BURGUNDY)
-			effects_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"upgrades":
 			label_text("A little more powerful", 27, FlightStyle.BURGUNDY)
 			label_text("Workday %d done. Pick one free ability." % GameManager.days, 15, FlightStyle.MUTED)
@@ -613,30 +609,21 @@ func adapt_layout() -> void:
 			image.custom_minimum_size = Vector2(120, 120) if wide else (Vector2(100, 100) if GameManager.phase == "relic" else Vector2(82, 82))
 			fit_card(card, row)
 
-func event_reward(event: FlightDefinition, alternative: bool) -> String:
-	var effect := event.alternative_effect if alternative else event.effect
-	var amount := event.alternative_amount if alternative else event.amount
-	if effect == "burst":
-		var charges := mini(int(ceilf(amount)), GameManager.balance.burst_cap - GameManager.burst_clicks)
-		return "+%d double-tap charges · %d total cap" % [charges, GameManager.balance.burst_cap]
-	return "+$%.2f savings" % (amount * GameManager.base_income() * GameManager.global_multiplier())
-
 func build_event() -> void:
 	var event := FlightCatalog.find_item(FlightCatalog.EVENTS, GameManager.event_id)
-	label_text("A LITTLE PLOT TWIST", 13, FlightStyle.BURGUNDY)
+	label_text("A LITTLE SETBACK" if event.negative else "A LITTLE GOOD LUCK", 13, FlightStyle.BURGUNDY)
 	label_text(event.title, 27)
 	artwork(event.id, 175, "events", event.icon)
-	label_text(event.description.get_slice("\n", 0), 18)
-	button((event.choice if not event.alternative.is_empty() else "Continue") + "\n" + event_reward(event, false), func() -> void: commit_event(false), true)
-	if not event.alternative.is_empty():
-		button(event.alternative + "\n" + event_reward(event, true), func() -> void: commit_event(true))
+	label_text(event.description, 18)
+	label_text(GameManager.event_result, 23, FlightStyle.GOAL_RED if event.negative else FlightStyle.SAVINGS_GREEN)
+	label_text("Savings: " + currency(GameManager.money) + "  ·  Ticket: " + currency(GameManager.goal()), 15, FlightStyle.MUTED)
+	button("Continue", commit_event, true)
 
-func commit_event(alternative: bool) -> void:
+func commit_event() -> void:
 	if decision_locked or GameManager.phase != "event":
 		return
 	decision_locked = true
-	GameManager.resolve_event(alternative)
-	celebrate("A lovely little bonus")
+	GameManager.resolve_event()
 
 func build_story() -> void:
 	pixel_divider()
@@ -819,9 +806,6 @@ func refresh() -> void:
 		progress_target = target
 	if is_instance_valid(timer_label):
 		timer_label.text = "Day %d" % (GameManager.days + 1) if GameManager.phase in ["transition", "ready"] else "%.1f seconds" % GameManager.remaining
-	if is_instance_valid(effects_label):
-		effects_label.text = "%d event-boosted taps" % GameManager.burst_clicks if GameManager.burst_clicks > 0 else ""
-		effects_label.visible = GameManager.burst_clicks > 0
 	if GameManager.save_error and is_instance_valid(toast):
 		toast.text = "Save unavailable. Keep this tab open and try Pause / Save again."
 
