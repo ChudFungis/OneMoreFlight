@@ -12,13 +12,13 @@ All nine abilities last for the rest of the current chapter and can be selected 
 | love | Nicky Mode | Each successful tap adds 0.1% × L of chapter base tap value to subsequent regular taps |
 | facetime | FaceTime Date | Every tenth tap adds 5 × L base-tap equivalents |
 | cabrito | Cabrito Power | Chance of doubling regular taps = 1 − 0.9^L (10%, 19%, 27.1%, …) |
-| team | Girls’ Night Boost | +L seconds at the start of every workday |
-| playlist | Carín León on Repeat | Every 50 taps adds 0.5 × L seconds to the current workday |
+| team | Well Rested | +L seconds at the start of every workday |
+| playlist | Norteno Playlist | Every 50 taps adds 0.5 × L seconds to the current workday |
 | flights | Volaris Red-Eye | Each selection multiplies the remaining ticket price by 0.92 |
 | jar | Passive Income Princess | Day-end interest is 20% at level one, plus 5 percentage points per additional level |
-| tips | One Wish Willow | +10 × L base-tap equivalents at day-end |
+| tips | One Wish Willow | +50 × L base-tap equivalents at day-end |
 
-CEO (empire), Jake Wants Meat (cafecito), and Jake’s Protection (blessing) remain archived as files but are not preloaded in the ability catalog or offered. Their old artwork is retained for the future audit.
+CEO (empire), Jake Wants Meat (cafecito), and Jake’s Protection (blessing) are retired. Their unused .tres Resources and inactive blessing calculations have been removed. Their old artwork is retained; migration still discards retired IDs without loading those Resources.
 
 ## Earnings and time
 
@@ -28,9 +28,9 @@ Regular tap value is base × (1 + Gringo bonus + earned Nicky growth). Cabrito m
 
 Nicky growth is earned after each tap’s payout, improves future taps, persists across workdays and saves, and resets at the chapter boundary. Buying a new Nicky level improves growth on subsequent taps; it does not retroactively multiply growth already earned. There is no combo, speed window or activation threshold.
 
-The 50-tap music counter resets each workday; there is no shared or daily extension cap. Higher levels add more time at every activation. Girls’ Night and Carín León stack fully. Work still ends immediately upon reaching the flight goal. Very high music levels can sustain a workday if tapping is sufficiently fast, but the savings milestone still ends it; no hidden anti-sustain cap was introduced.
+The 50-tap music counter resets each workday; there is no shared or daily extension cap. Higher levels add more time at every activation. Well Rested and Norteno Playlist stack fully. Work still ends immediately upon reaching the flight goal. Very high music levels can sustain a workday if tapping is sufficiently fast, but the savings milestone still ends it; no hidden anti-sustain cap was introduced.
 
-At day-end, settle Willow’s cash (including the earnings keepsake multiplier), then Princess interest on the resulting savings. For example, $500 plus level-one Willow ($50 in Denver) and level-one Princess yields $660. With Princess alone it yields $600. Interest is not directly multiplied by Matching Underwear. Both payouts happen exactly once before milestone checking, and a newly chosen reward first benefits a later workday.
+At day-end, settle Willow’s cash (including the earnings keepsake multiplier), then Princess interest on the resulting savings. For example, $500 plus level-one Willow ($250 in Denver) and level-one Princess yields $900. With Princess alone it yields $600. Interest is not directly multiplied by Matching Underwear. Both payouts happen exactly once before milestone checking, and a newly chosen reward first benefits a later workday.
 
 Volaris has no old 50% discount floor. Each level reduces the remaining ticket price by 8%; Passport independently applies its 12% keepsake reduction. No time, level, Nicky-growth or interest gameplay caps were added. Finite-number validation on loaded data remains corruption protection.
 

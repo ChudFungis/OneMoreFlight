@@ -33,3 +33,19 @@ Settings includes Reduced motion. It is saved separately in `user://presentation
 The existing heart and all content illustrations are unchanged. UI pixel assets now also include `pause.svg`, `home.svg`, `toggle_on.svg`, `toggle_off.svg` and `knob.svg`. These use the same burgundy/rose grid treatment as existing utility icons. All FlightArt images use nearest texture filtering; fonts stay smoothly antialiased. Existing explicit texture > PNG > WebP > SVG > fallback resolution remains intact.
 
 The travel suitcase frame is drawn by `scripts/ui/flight_suitcase.gd` from shared palette/StyleBox tokens (handle, hinges, lid seam and tag). Item art remains unmodified and uses the same explicit texture/PNG/WebP/SVG resolution. Slight artwork tilts are presentation-only; icon touch targets remain axis-aligned and fixed. The empty case reuses `ui/airplane`.
+
+## Ability Resource filenames
+
+Resource files use readable ability names. Artwork paths and save IDs remain stable; rename neither when editing a title.
+
+| Resource file in resources/upgrades | Stable ID / artwork stem |
+| --- | --- |
+| `gringo_influence.tres` | `appointment` |
+| `cabrito_power.tres` | `cabrito` |
+| `facetime_date.tres` | `facetime` |
+| `volaris_red_eye.tres` | `flights` |
+| `passive_income_princess.tres` | `jar` |
+| `nicky_mode.tres` | `love` |
+| `norteno_playlist.tres` | `playlist` |
+| `well_rested.tres` | `team` |
+| `one_wish_willow.tres` | `tips` |

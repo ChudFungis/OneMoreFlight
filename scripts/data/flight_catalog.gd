@@ -1,15 +1,15 @@
 class_name FlightCatalog
 extends RefCounted
 const UPGRADES := [
-	preload("res://resources/upgrades/cabrito.tres"),
-	preload("res://resources/upgrades/facetime.tres"),
-	preload("res://resources/upgrades/appointment.tres"),
-	preload("res://resources/upgrades/flights.tres"),
-	preload("res://resources/upgrades/love.tres"),
-	preload("res://resources/upgrades/playlist.tres"),
-	preload("res://resources/upgrades/tips.tres"),
-	preload("res://resources/upgrades/jar.tres"),
-	preload("res://resources/upgrades/team.tres"),
+	preload("res://resources/upgrades/cabrito_power.tres"),
+	preload("res://resources/upgrades/facetime_date.tres"),
+	preload("res://resources/upgrades/gringo_influence.tres"),
+	preload("res://resources/upgrades/volaris_red_eye.tres"),
+	preload("res://resources/upgrades/nicky_mode.tres"),
+	preload("res://resources/upgrades/norteno_playlist.tres"),
+	preload("res://resources/upgrades/one_wish_willow.tres"),
+	preload("res://resources/upgrades/passive_income_princess.tres"),
+	preload("res://resources/upgrades/well_rested.tres"),
 ]
 const RELICS := [
 	preload("res://resources/relics/hoodie.tres"),

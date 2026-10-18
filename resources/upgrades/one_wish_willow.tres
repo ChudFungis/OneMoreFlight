@@ -2,10 +2,10 @@
 [ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
 [resource]
 script = ExtResource("1")
-id = "team"
-title = "Girls’ Night Boost"
-description = "The girls give Dany a little more time to make things happen.\nStart every workday with +1 second per level."
-effect = "time"
-amount = 1
+id = "tips"
+title = "One Wish Willow"
+description = "One Wish Willow grants something you can count on.\nReceive +50 base-tap equivalents per level at day-end."
+effect = "day_gift"
+amount = 50
 max_level = 0
 price = 0

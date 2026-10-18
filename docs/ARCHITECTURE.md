@@ -87,6 +87,12 @@ FlightScreen and its tests explicitly preload the suitcase script as SUITCASE_CO
 
 ## Nine-ability rule update (snapshot v4)
 
-The catalog contains nine repeatable chapter abilities, with zero max_level meaning unlimited levels. Retired Resources remain on disk but cannot be offered. GameManager owns the permanent chance, chapter-long Nicky accumulator, every-50th-tap time grant and once-only Willow/Princess settlement. UI uses GameManager.ability_effect for current/next numerical descriptions and no longer displays combo or calls Cabrito a refill. Existing event charges and keepsakes retain their rules.
+The catalog contains nine repeatable chapter abilities, with zero max_level meaning unlimited levels. Retired Resources have been removed; legacy IDs are still ignored on restore. GameManager owns the permanent chance, chapter-long Nicky accumulator, every-50th-tap time grant and once-only Willow/Princess settlement. UI uses GameManager.ability_effect for current/next numerical descriptions and no longer displays combo or calls Cabrito a refill. Existing event charges and keepsakes retain their rules.
 
 Snapshots persist nicky_growth and RNG state (as text for browser-safe 64-bit round trips). Chapter reset clears growth and ordinary levels; workday reset clears only the daily tap count. Loading does not re-award music, interest or Willow gifts. Save versions 1–3 migrate retained IDs, ignore retired ones and convert old Cabrito refill ownership to one permanent chance level. Local completed results and settings are untouched.
+
+Ability Resource filenames now match current display titles (see docs/ARTWORK.md for the mapping). Resource id fields, GameManager lookups, saved identifiers and artwork filenames retain their stable historical IDs; FlightCatalog preloads the renamed files explicitly.
+
+A work → upgrades signal now passes through FlightScreen's local one-second day-end animation. GameManager stays in its already-persisted upgrades phase throughout. No new campaign phase/save schema is added. The scene-bound Tween pauses with gameplay, is cancelled on an unrelated rebuild, and only reveals UI. Winning workdays retain the direct story transition.
+
+FlightScreen.build_savings_hud can render the shared framed values with or without a progress bar and optional completed-workday click total. The ability reward view reuses it and the existing suitcase below its confirmation button. All displayed values come from GameManager; no new counters or persistence fields were added.

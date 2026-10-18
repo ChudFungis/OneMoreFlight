@@ -452,6 +452,22 @@ func check_presentation() -> void:
 	check(screen.feedback_count >= 30 and screen.feedback_count <= 35, "Earnings feedback missing or particles excessive")
 	GameManager.remaining = 0
 	GameManager.finish_shift()
+	check(screen.has_node("DayEndTransition") and screen.selection_cards.is_empty() and screen.tap_button.disabled, "Workday did not block input before reward presentation")
+	var settled_day := GameManager.snapshot()
+	SceneManager.pause_run()
+	await get_tree().create_timer(0.15, true).timeout
+	check(screen.has_node("DayEndTransition") and screen.selection_cards.is_empty(), "Pause skipped the day-end transition")
+	SceneManager.resume_run()
+	await capture_view("day_end", 390)
+	await get_tree().create_timer(0.45).timeout
+	check(screen.selection_cards.is_empty(), "Free choices appeared before end-of-day transition")
+	await get_tree().create_timer(0.65).timeout
+	check(screen.selection_cards.size() == 3 and not screen.has_node("DayEndTransition"), "Day-end transition did not reveal choices")
+	check(GameManager.snapshot() == settled_day, "Day-end animation changed earnings or rewards")
+	check(screen.money_label.text == screen.currency(GameManager.money) and screen.goal_label.text == screen.currency(GameManager.goal()), "Reward footer savings/goal incorrect")
+	check(collect_labels(screen).contains("TOTAL CLICKS") and collect_labels(screen).contains("CURRENT DAY") and GameManager.shift_clicks == 30 and screen.item_lists.visible, "Reward footer omitted workday clicks or suitcase")
+	check(screen.find_child("RewardStats", true, false).get_child_count() == 4, "Reward summary does not contain four boxes")
+	await capture_view("reward_footer", 390)
 	screen = SceneManager.screen_host.get_child(0)
 	var id: String = GameManager.offers[0]
 	var old_level := GameManager.count(id)
@@ -477,6 +493,12 @@ func check_presentation() -> void:
 	screen.animate_tap()
 	screen.release_heart()
 	check(screen.heart_image.scale == Vector2.ONE, "Reduced motion still scales heart")
+	GameManager.advance_time(GameManager.remaining)
+	check(screen.has_node("DayEndTransition"), "Reduced motion skipped the day-end message")
+	await get_tree().create_timer(0.5).timeout
+	check(screen.selection_cards.is_empty(), "Reduced-motion choices appeared too early")
+	await get_tree().create_timer(0.55).timeout
+	check(screen.selection_cards.size() == 3, "Reduced-motion transition failed to reveal rewards")
 	FlightStyle.reduced_motion = false
 	DirAccess.remove_absolute(FlightStyle.preference_path)
 	await get_tree().process_frame
@@ -774,6 +796,17 @@ func check_collection_ui() -> void:
 		check(collect_labels(modal).contains(definition.description.get_slice("\n", 1)), "Ability detail missing effect: " + definition.id)
 		modal.close()
 		await get_tree().process_frame
+	GameManager.offers = GameManager.upgrade_offers()
+	GameManager.set_phase("upgrades")
+	check(screen.item_rows.size() == FlightCatalog.UPGRADES.size() + FlightCatalog.RELICS.size(), "Reward footer omitted owned items")
+	await capture_view("reward_collection", 360)
+	var reward_state := GameManager.snapshot()
+	screen.item_rows["upgrades/love"].pressed.emit()
+	modal = SceneManager.overlay_host.get_child(0)
+	check(modal.item.id == "love" and modal.level == GameManager.count("love"), "Reward suitcase opened wrong details")
+	check(GameManager.snapshot() == reward_state, "Reward suitcase inspection changed the offer")
+	modal.close()
+	await get_tree().process_frame
 	get_tree().root.size = Vector2i(390, 844)
 
 func capture_modal(label: String) -> void:
@@ -892,6 +925,7 @@ func check_seamless_flow() -> void:
 	GameManager.set_process(false)
 	# Check UI-driven upgrade -> transition -> next workday, with no start action.
 	GameManager.advance_time(GameManager.remaining)
+	await get_tree().create_timer(1.05).timeout
 	var chosen: String = GameManager.offers[0]
 	screen.select_choice(chosen)
 	screen.commit_choice()
@@ -1054,9 +1088,9 @@ func check_permanent_abilities() -> void:
 	GameManager.money = 500
 	GameManager.remaining = 0
 	GameManager.finish_shift()
-	check(is_equal_approx(GameManager.money, 660), "Willow then 20 percent Princess settlement incorrect")
+	check(is_equal_approx(GameManager.money, 900), "Willow then 20 percent Princess settlement incorrect")
 	GameManager.finish_shift()
-	check(is_equal_approx(GameManager.money, 660) and GameManager.days == 1, "Day-end rewards paid twice")
+	check(is_equal_approx(GameManager.money, 900) and GameManager.days == 1, "Day-end rewards paid twice")
 	check(is_equal_approx(GameManager.interest_rate(2), 0.25) and is_equal_approx(GameManager.interest_rate(5), 0.4), "Princess levels retained old interest cap")
 	GameManager.new_game()
 	for level: int in range(20):

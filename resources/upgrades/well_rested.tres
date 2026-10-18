@@ -2,10 +2,10 @@
 [ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
 [resource]
 script = ExtResource("1")
-id = "empire"
-title = "CEO"
-description = "You are the CEO now. Other people do the work while you supervise.\n+1 base-tap equivalent per second per level; maximum 3 levels."
-effect = "passive"
+id = "team"
+title = "Well Rested"
+description = "You get a great night of sleep and don't have to wake up early.\nStart every workday with +1 second per level."
+effect = "time"
 amount = 1
-max_level = 3
+max_level = 0
 price = 0

@@ -74,3 +74,23 @@ Each icon uses the existing stable-ID/explicit-texture FlightArt mapping. Fixed 
 The internal viewport grows from 56 to 128 logical pixels, then scrolls vertically; outer gameplay scrolling still handles short screens. Every owned ID appears once and remains reachable. Suitcase geometry does not depend on texture dimensions, and no physics/idle animation loop is used.
 
 FlightScreen retains only a local last-rendered collection/level map. Newly acquired items or level increases pop their artwork from 65% to full scale over 0.24 seconds while fading in; reduced motion skips it. First rendering/restoration does not replay acquisition animations. The animation never delays workday startup or modifies items. Local history is not saved; collection contents still come entirely from GameManager.
+
+## One-second day-end handoff
+
+A below-goal workday now keeps the tapping view briefly behind a full-screen input-blocking “Day complete” message before revealing ability choices. Copy explicitly says “Choose one free ability” and “No savings spent.” The visual handoff totals one second: 0.15-second cover entrance, 0.67-second hold, then the existing 0.18-second choice-screen entrance. Reduced motion uses a static one-second message without fades. Pause freezes the handoff; goal-reaching workdays still enter their story immediately.
+
+FlightScreen owns this transient presentation only. GameManager already settled and saved the day and mandatory offer. Animation callbacks only rebuild the UI, never select an ability or award income. Old buttons are disabled and the cover receives input while choices are hidden. A phase change/rebuild cancels the old Tween; restored pending rewards show the persisted offer directly without replaying earnings or requiring a new choice step.
+
+## Framed savings and reward-page collection
+
+The shared savings HUD now places SAVED and FLIGHT GOAL inside one warm-white arcade PanelContainer with the existing burgundy frame and rose depth. The gameplay progress bar remains directly underneath. Currency alignment, wrapping and fitting remain shared.
+
+Below the ability confirmation button, a compact version of that panel displays saved money, the discounted flight goal and TOTAL CLICKS for the completed workday (the existing shift_clicks counter, not a new lifetime statistic). The same icon-only suitcase is directly below it. Owned items open the unchanged current-level/exact-effect popup without altering the pending offer. This footer uses normal page scrolling and the suitcase's bounded internal scroll for larger collections; no card, economy, save or acquisition rule changes.
+
+### Separate tapping HUD boxes
+
+The tapping view now uses two independent equal-width value boxes, with SAVED and FLIGHT GOAL captions above their respective frames. Values use Baloo 2 ExtraBold at 32 pixels, fitting down to 16 and wrapping exceptionally long currency as needed. Fixed 72-pixel minimum box heights keep the pair visually aligned. The full-width progress bar remains below them. The ability selection footer retains its original shared panel and 24-pixel Bold numbers.
+
+### Four-box reward summary
+
+The ability-page footer now uses a two-column grid with four individual themed panels: SAVED, FLIGHT GOAL, TOTAL CLICKS (completed workday), and CURRENT DAY (completed chapter day). Centered ExtraBold values use the shared green/red currency palette. The inspectable suitcase remains a separate full-width collection below the grid. The tapping HUD is unchanged by this refinement.

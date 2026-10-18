@@ -289,7 +289,6 @@ func resolve_event(alternative: bool = false) -> void:
 		return
 	var effect := item.alternative_effect if alternative else item.effect
 	var amount := item.alternative_amount if alternative else item.amount
-	amount *= 1.0 + power("blessing")
 	match effect:
 		"gift": money += amount * base_income() * global_multiplier()
 		"burst": add_burst(int(ceilf(amount)))

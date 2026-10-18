@@ -4,6 +4,8 @@ extends Control
 const SUITCASE_COMPONENT = preload("res://scripts/ui/flight_suitcase.gd")
 const STORY = preload("res://resources/story.tres")
 const WORKDAY_TRANSITION_SECONDS := 0.4
+const DAY_END_SECONDS := 1.0
+var day_end_tween: Tween
 @export var view: String = "main_menu"
 var body: VBoxContainer
 var goal_label: Label
@@ -72,6 +74,13 @@ func button(text: String, action: Callable, primary: bool = false) -> Button:
 func rebuild() -> void:
 	if not is_inside_tree():
 		return
+	if view == "game" and last_phase == "work" and GameManager.phase == "upgrades":
+		last_phase = "day_end"
+		rebuild_generation += 1
+		show_day_end()
+		return
+	if day_end_tween != null:
+		day_end_tween.kill()
 	# The transition already rendered and faded in this exact workday screen.
 	if view == "game" and last_phase in ["transition", "ready"] and GameManager.phase == "work" and is_instance_valid(tap_button):
 		tap_button.disabled = false
@@ -136,15 +145,57 @@ func rebuild() -> void:
 		body.modulate.a = 0
 		create_tween().tween_property(body, "modulate:a", 1.0, FlightStyle.ENTER_SECONDS)
 	if view == "game":
-		if GameManager.phase == "upgrades" and last_phase == "work":
-			celebrate("Workday complete")
-		elif GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades", "event"]:
+		if GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades", "event"]:
 			celebrate("One flight closer ✦")
 		if GameManager.phase == "ending" and last_phase != "ending":
 			celebrate("You made it!", true)
 		last_phase = GameManager.phase
 		if GameManager.phase in ["transition", "ready"]:
 			arm_workday(rebuild_generation)
+
+func show_day_end() -> void:
+	# Rewards are already saved by GameManager. Only their presentation waits.
+	disable_day_end_input(body)
+	var cover := ColorRect.new()
+	cover.name = "DayEndTransition"
+	cover.color = FlightStyle.CREAM
+	cover.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cover.focus_mode = Control.FOCUS_ALL
+	add_child(cover)
+	cover.grab_focus()
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cover.add_child(center)
+	var message := VBoxContainer.new()
+	message.custom_minimum_size.x = minf(360, size.x - 40)
+	message.add_theme_constant_override("separation", 12)
+	center.add_child(message)
+	var previous := body
+	body = message
+	pixel_divider()
+	centered_label("Day %d complete!" % GameManager.days, 28, FlightStyle.BURGUNDY)
+	centered_label("Choose one free ability", 18, FlightStyle.BURGUNDY)
+	centered_label("No savings spent", 15, FlightStyle.MUTED)
+	body = previous
+	ignore_pointer(center)
+	day_end_tween = create_tween()
+	if FlightStyle.reduced_motion:
+		day_end_tween.tween_interval(DAY_END_SECONDS)
+	else:
+		cover.modulate.a = 0
+		day_end_tween.tween_property(cover, "modulate:a", 1.0, 0.15)
+		day_end_tween.tween_interval(DAY_END_SECONDS - 0.15 - FlightStyle.ENTER_SECONDS)
+	# Rebuild only reveals the saved offer. It never grants or selects a reward.
+	day_end_tween.tween_callback(func() -> void:
+		day_end_tween = null
+		rebuild())
+
+func disable_day_end_input(node: Node) -> void:
+	if node is Button:
+		node.disabled = true
+	for child: Node in node.get_children():
+		disable_day_end_input(child)
 
 func arm_workday(generation: int) -> void:
 	# One rendered, input-blocked tapping screen; no countdown or overview.
@@ -357,6 +408,8 @@ func build_game() -> void:
 			label_text("A little more powerful", 27, FlightStyle.BURGUNDY)
 			label_text("Workday %d done. Pick one free ability." % GameManager.days, 15, FlightStyle.MUTED)
 			build_choices(false)
+			build_reward_summary("CURRENT DAY", str(GameManager.days))
+			build_item_lists()
 		"event": build_event()
 		"story": build_story()
 		"relic":
@@ -563,7 +616,6 @@ func adapt_layout() -> void:
 func event_reward(event: FlightDefinition, alternative: bool) -> String:
 	var effect := event.alternative_effect if alternative else event.effect
 	var amount := event.alternative_amount if alternative else event.amount
-	amount *= 1.0 + GameManager.power("blessing")
 	if effect == "burst":
 		var charges := mini(int(ceilf(amount)), GameManager.balance.burst_cap - GameManager.burst_clicks)
 		return "+%d double-tap charges · %d total cap" % [charges, GameManager.balance.burst_cap]
@@ -614,30 +666,97 @@ func build_flight_route() -> void:
 			route.add_child(plane)
 	body = previous
 
-func build_savings_hud() -> void:
+func build_reward_summary(fourth_title: String, fourth_value: String) -> void:
+	var grid := GridContainer.new()
+	grid.name = "RewardStats"
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	body.add_child(grid)
+	var entries := [
+		["SAVED", currency(GameManager.money), FlightStyle.SAVINGS_GREEN],
+		["FLIGHT GOAL", currency(GameManager.goal()), FlightStyle.GOAL_RED],
+		["TOTAL CLICKS", str(GameManager.shift_clicks), FlightStyle.BURGUNDY],
+		[fourth_title, fourth_value, FlightStyle.BURGUNDY],
+	]
+	var previous := body
+	for index: int in range(entries.size()):
+		var panel := PanelContainer.new()
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var surface := FlightStyle.card()
+		surface.set_content_margin_all(8)
+		panel.add_theme_stylebox_override("panel", surface)
+		grid.add_child(panel)
+		var content := VBoxContainer.new()
+		content.add_theme_constant_override("separation", 2)
+		panel.add_child(content)
+		body = content
+		centered_label(entries[index][0], 12, FlightStyle.MUTED)
+		var value := centered_label(entries[index][1], 26, entries[index][2])
+		value.add_theme_font_override("font", FlightStyle.FONT_HEADING)
+		value.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		value.set_meta("currency_size", 26)
+		value.resized.connect(func() -> void: fit_currency(value))
+		if index == 0:
+			money_label = value
+		elif index == 1:
+			goal_label = value
+	body = previous
+
+func build_savings_hud(show_progress: bool = true, show_clicks: bool = false) -> void:
+	var previous := body
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	if show_progress:
+		body.add_child(content)
+	else:
+		var panel := PanelContainer.new()
+		panel.name = "SavingsPanel"
+		body.add_child(panel)
+		panel.add_child(content)
+	body = content
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)
-	var previous := body
 	for is_goal: bool in [false, true]:
 		var column := VBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		column.size_flags_stretch_ratio = 1.0
-		column.add_theme_constant_override("separation", 0)
+		column.add_theme_constant_override("separation", 4 if show_progress else 0)
 		row.add_child(column)
 		body = column
 		var caption := label_text("FLIGHT GOAL" if is_goal else "SAVED", 13, FlightStyle.MUTED)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if is_goal else HORIZONTAL_ALIGNMENT_LEFT
-		var value := label_text("", 24, FlightStyle.BURGUNDY)
-		value.add_theme_font_override("font", FlightStyle.FONT_BOLD)
+		if show_progress:
+			var value_box := PanelContainer.new()
+			value_box.name = "GoalValueBox" if is_goal else "SavedValueBox"
+			value_box.custom_minimum_size.y = 72
+			var surface := FlightStyle.card()
+			surface.set_content_margin_all(8)
+			value_box.add_theme_stylebox_override("panel", surface)
+			column.add_child(value_box)
+			var value_content := VBoxContainer.new()
+			value_content.alignment = BoxContainer.ALIGNMENT_CENTER
+			value_box.add_child(value_content)
+			body = value_content
+		var value := label_text("", 32 if show_progress else 24, FlightStyle.GOAL_RED if is_goal else FlightStyle.SAVINGS_GREEN)
+		value.set_meta("currency_size", 32 if show_progress else 24)
+		value.add_theme_font_override("font", FlightStyle.FONT_HEADING if show_progress or not is_goal else FlightStyle.FONT_BOLD)
 		value.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-		value.horizontal_alignment = caption.horizontal_alignment
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if show_progress else caption.horizontal_alignment
 		value.resized.connect(func() -> void: fit_currency(value))
 		if is_goal:
 			goal_label = value
 		else:
 			money_label = value
+	body = content
+	if show_clicks:
+		var clicks := label_text("TOTAL CLICKS  %d" % GameManager.shift_clicks, 14, FlightStyle.BURGUNDY)
+		clicks.name = "WorkdayClicks"
+		clicks.tooltip_text = "Total taps in the completed workday"
 	body = previous
+	if not show_progress:
+		return
 	progress = ProgressBar.new()
 	progress.step = 0.0
 	progress.custom_minimum_size.y = 12
@@ -655,8 +774,9 @@ func currency(amount: float) -> String:
 	return "$" + grouped
 
 func fit_currency(value: Label) -> void:
-	var font_size := 24
-	while font_size > 16 and FlightStyle.FONT_BOLD.get_string_size(value.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > value.size.x:
+	var font_size := int(value.get_meta("currency_size", 24))
+	var font := value.get_theme_font("font")
+	while font_size > 16 and font.get_string_size(value.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > value.size.x:
 		font_size -= 1
 	value.add_theme_font_size_override("font_size", font_size)
 
@@ -665,7 +785,7 @@ func pulse_savings() -> void:
 		return
 	if savings_tween != null and savings_tween.is_running():
 		return
-	money_label.modulate = FlightStyle.ROSE
+	money_label.modulate = Color("c9f5d8")
 	savings_tween = money_label.create_tween()
 	savings_tween.tween_property(money_label, "modulate", Color.WHITE, 0.18)
 
@@ -742,8 +862,10 @@ func feedback(text: String, at: Vector2, particle: bool) -> void:
 	feedback_count += 1
 	var floating := Label.new()
 	floating.text = text
-	floating.add_theme_font_size_override("font_size", 22 if particle else 24)
-	floating.add_theme_color_override("font_color", FlightStyle.BURGUNDY)
+	floating.add_theme_font_size_override("font_size", 22 if particle else 26)
+	if not particle:
+		floating.add_theme_font_override("font", FlightStyle.FONT_HEADING)
+	floating.add_theme_color_override("font_color", FlightStyle.BURGUNDY if particle else FlightStyle.SAVINGS_GREEN)
 	floating.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(floating)
 	floating.global_position = at

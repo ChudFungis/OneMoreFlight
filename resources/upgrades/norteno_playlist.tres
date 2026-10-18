@@ -2,10 +2,10 @@
 [ext_resource type="Script" path="res://scripts/data/flight_definition.gd" id="1"]
 [resource]
 script = ExtResource("1")
-id = "tips"
-title = "One Wish Willow"
-description = "One Wish Willow grants something you can count on.\nReceive +10 base-tap equivalents per level at day-end."
-effect = "day_gift"
-amount = 10
+id = "playlist"
+title = "Norteno Playlist"
+description = "One more song. One more moment to keep going.\nEvery 50 taps adds +0.5 seconds per level to this workday, with no daily extension cap."
+effect = "tap_time"
+amount = 0.5
 max_level = 0
 price = 0
