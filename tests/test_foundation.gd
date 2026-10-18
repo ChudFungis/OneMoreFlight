@@ -74,7 +74,7 @@ func run_checks() -> void:
 	GameManager.apply_upgrade(item("facetime"))
 	GameManager.relics = ["unlimited"]
 	GameManager.shift_clicks = 9
-	check(GameManager.tap() == 60, "FaceTime / relic synergy failed")
+	check(GameManager.tap() == 30, "Your Biggest Fan retained the old tenth-tap payout")
 	GameManager.upgrades = {}
 	GameManager.relics = []
 	GameManager.apply_upgrade(item("love"))
@@ -155,6 +155,7 @@ func run_checks() -> void:
 			GameManager.resolve_event(alternate)
 			check(GameManager.phase == "transition" and GameManager.money >= 1000, "Event failed: " + event.id)
 	await check_redesign()
+	await check_biggest_fan()
 	# Save/load preserves the exact decision and offers, not just a chapter index.
 	GameManager.phase = "relic"
 	GameManager.offers = ["kiss", "hoodie", "passport"]
@@ -1028,6 +1029,65 @@ func check_immediate_goals() -> void:
 	GameManager.money = GameManager.goal()
 	var legacy_work := GameManager.snapshot()
 	check(GameManager.restore(legacy_work) and GameManager.phase == "story" and GameManager.days == 1, "Above-goal active save did not settle")
+	await get_tree().process_frame
+
+func check_biggest_fan() -> void:
+	GameManager.new_game()
+	GameManager.relics = ["unlimited"]
+	SceneManager.show_screen("main_menu")
+	# Locate a deterministic successful roll and retain its pre-roll state.
+	var probe := RandomNumberGenerator.new()
+	probe.seed = 41387
+	var bonus_state: int = probe.state
+	while probe.randf() >= 0.25:
+		bonus_state = probe.state
+	GameManager.rng.state = bonus_state
+	GameManager.phase = "upgrades"
+	GameManager.offers = ["appointment"]
+	var before := GameManager.rng.state
+	check(not GameManager.buy_upgrade("tips") and GameManager.rng.state == before, "Invalid choice consumed a Fan roll")
+	check(GameManager.buy_upgrade("appointment") and GameManager.count("appointment") == 2, "Fan did not grant exactly one extra level")
+	var after := GameManager.snapshot()
+	check(not GameManager.buy_upgrade("appointment") and GameManager.snapshot() == after, "Duplicate confirm rerolled or granted more levels")
+	SaveManager.load_data()
+	check(GameManager.restore(SaveManager.progression) and GameManager.count("appointment") == 2, "Fan bonus failed disk save")
+	GameManager.upgrades = {}
+	GameManager.rng.state = bonus_state
+	GameManager.apply_upgrade(item("appointment"))
+	check(GameManager.count("appointment") == 1 and GameManager.rng.state == bonus_state, "Direct grant recursively rolled Fan")
+	# The second discount uses the same rule as any ordinary extra level.
+	GameManager.upgrades = {}
+	GameManager.goal_multiplier = 1
+	GameManager.phase = "upgrades"
+	GameManager.offers = ["flights"]
+	GameManager.rng.state = bonus_state
+	GameManager.buy_upgrade("flights")
+	check(GameManager.count("flights") == 2 and is_equal_approx(GameManager.goal_multiplier, 0.92 * 0.92), "Fan extra discount failed")
+	GameManager.new_game()
+	GameManager.relics = ["unlimited"]
+	SceneManager.show_screen("main_menu")
+	GameManager.rng.seed = 668811
+	var bonuses := 0
+	for trial: int in range(400):
+		GameManager.upgrades = {}
+		GameManager.phase = "upgrades"
+		GameManager.offers = ["appointment"]
+		GameManager.buy_upgrade("appointment")
+		if GameManager.count("appointment") == 2:
+			bonuses += 1
+		check(GameManager.count("appointment") in [1, 2], "Fan bonus recursively granted more levels")
+		if trial % 20 == 0:
+			await get_tree().process_frame
+	check(bonuses > 75 and bonuses < 125, "Fan probability outside expected range")
+	print("Your Biggest Fan extra-level frequency: %d/400" % bonuses)
+	GameManager.relics = []
+	GameManager.upgrades = {}
+	GameManager.phase = "upgrades"
+	GameManager.offers = ["appointment"]
+	GameManager.rng.state = bonus_state
+	GameManager.buy_upgrade("appointment")
+	check(GameManager.count("appointment") == 1, "Fan bonus applied without the keepsake")
+	GameManager.new_game()
 	await get_tree().process_frame
 
 func check_permanent_abilities() -> void:

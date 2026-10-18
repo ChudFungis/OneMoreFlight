@@ -176,7 +176,7 @@ func tap() -> float:
 		multiplier *= 1.0 + relic_power("hoodie")
 	var reward := base_income() * multiplier
 	if shift_clicks % balance.facetime_tap_interval == 0:
-		reward += base_income() * (power("facetime") + relic_power("unlimited"))
+		reward += base_income() * power("facetime")
 	if shift_clicks % balance.music_tap_interval == 0:
 		remaining += power("playlist")
 	nicky_growth += power("love")
@@ -263,7 +263,13 @@ func buy_upgrade(id: String) -> bool:
 	if item == null or not eligible_upgrade(item):
 		return false
 	apply_upgrade(item)
+	# Only a confirmed ability choice rolls once; direct grants never recurse.
+	var extra_level := has_relic("unlimited") and rng.randf() < relic_power("unlimited")
+	if extra_level:
+		apply_upgrade(item)
 	complete_reward()
+	if extra_level:
+		notice.emit("Your Biggest Fan! " + item.title + " gained an extra level.")
 	return true
 
 func add_burst(amount: int) -> void:

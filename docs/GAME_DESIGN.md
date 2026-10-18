@@ -24,7 +24,7 @@ CEO (empire), Jake Wants Meat (cafecito), and Jake’s Protection (blessing) are
 
 Base taps remain $5 / $10 / $17.50 by chapter. Base ticket goals remain $2,100 / $5,300 / $11,000. The base workday is ten seconds.
 
-Regular tap value is base × (1 + Gringo bonus + earned Nicky growth). Cabrito may double this regular component, independently of existing event charge boosts. The first-ten-tap hoodie keepsake and Matching Underwear retain their existing multipliers. FaceTime and Unlimited FaceTime add their base-value milestone bonuses separately, so Cabrito does not double those bonuses.
+Regular tap value is base × (1 + Gringo bonus + earned Nicky growth). Cabrito may double this regular component, independently of existing event charge boosts. The first-ten-tap hoodie keepsake and Matching Underwear retain their existing multipliers. FaceTime Date adds its milestone bonus separately, so Cabrito does not double it. The former Unlimited FaceTime keepsake no longer pays a tenth-tap bonus.
 
 Nicky growth is earned after each tap’s payout, improves future taps, persists across workdays and saves, and resets at the chapter boundary. Buying a new Nicky level improves growth on subsequent taps; it does not retroactively multiply growth already earned. There is no combo, speed window or activation threshold.
 
@@ -41,5 +41,11 @@ After each below-goal workday, offer three distinct abilities. Each card chooses
 After the reward, the existing event occurs on every third completed below-goal chapter day. Event choices, cash gifts, temporary double-tap charges (60 shared-charge limit), no-consecutive-repeat selection and persistence remain unchanged. Jake’s Protection is no longer offered, so events have no new amplifier. Negative automatic events are a separate future change.
 
 Snapshot version 4 persists Nicky growth and the 64-bit gameplay RNG state as a decimal string to avoid browser JSON rounding and reload rerolls. Versions 1–3 still load. Retired ability IDs are ignored; owned old Cabrito refill counts migrate to one permanent chance level; old combo fields are ignored and Nicky starts without fabricated historical growth. Existing levels of retained abilities use their new effects. Remaining time is validated against starting time plus music activations earned by that day’s taps, rather than an obsolete 16-second cap. Completed local results and settings retain their separate formats and are not erased.
+
+## Updated keepsakes
+
+Mind Reader (stable ID postcard) retains automatic earnings of two chapter base taps per active second: $20/sec in Italy and $35/sec in the final chapter before Matching Underwear. Lip-Stained Passport (passport) retains a 12% ticket reduction. Their simpler titles and descriptions do not change mechanics.
+
+Your Biggest Fan replaces Unlimited FaceTime while retaining the stable ID unlimited and its artwork path. Whenever the player confirms a free ability choice, it has a 25% chance to apply that same ability a second time. This adds exactly one extra level, never recursively rolls, and supports new or owned abilities. Both Volaris levels apply their individual 8% price reductions. Direct grants (including Goodbye Kiss), events, keepsake choices, invalid actions and duplicate confirmations do not roll. The result and RNG state are saved by the existing reward settlement before the next screen, so reloading does not reroll. A notice announces a successful bonus. Existing saves with unlimited receive the replacement behavior; no save format change is needed.
 
 Human session duration and real-device interaction require playtesting. Seeded full-campaign simulation results belong in docs/VALIDATION.md; do not reuse timings measured under the old ability system.

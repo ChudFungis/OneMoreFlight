@@ -3,7 +3,7 @@
 [resource]
 script = ExtResource("1")
 id = "unlimited"
-title = "Unlimited FaceTime"
-description = "When one call ends, the next one is already starting.\n+6 base-tap equivalents on every 10th tap."
-effect = "tenth"
-amount = 6
+title = "Your Biggest Fan"
+description = "Josh makes every little win feel bigger.\nWhen you choose an ability, there is a 25% chance it gains an extra level."
+effect = "extra_level"
+amount = 0.25

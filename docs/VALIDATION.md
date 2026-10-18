@@ -135,3 +135,11 @@ The shared SAVED/FLIGHT GOAL values now sit in a themed panel. Ability selection
 Separate tapping HUD refinement: headless suite passes 11,145 checks; native targeted captures at 390 and 320 widths verify separate framed values, captions outside/above the boxes, ExtraBold currency and large-number fitting. The reward footer is unchanged. Import/runtime report no script errors; the pre-existing story artwork casing warnings remain outside this change.
 
 Four-box reward footer: Godot import and 11,146 headless checks pass. Native targeted captures at 390/320 widths were inspected for the two-by-two stat grid and accessible suitcase/scrolling. Tests retain exact currency/goal checks and verify four stat panels. No gameplay or save changes.
+
+## Your Biggest Fan keepsake
+
+Replaced the unlimited keepsake's tenth-tap payout with a 25% chance of one extra level on a confirmed ability choice. Stable save/art ID unlimited is retained. No recursive rolls, direct-grant bonuses or invalid/double-confirm rolls; Volaris extra levels use the same multiplicative discount rule. Successful results and RNG state persist through disk reload, with a bonus notice.
+
+Godot 4.7.2 headless suite passes 11,557 checks with zero failures. The new deterministic chance trial produced 105 bonuses / 400 selections. Tests cover successful grants, unchanged direct grants, no-keepsake behavior, duplicate confirms, disk restore, the removed tenth-tap payout and compounded discounts. Existing day-end animation, framed HUD, nine-ability roster and local score checks pass. Only intentional corrupt-save/results warnings remain.
+
+Updated seeded simulations (same preference order, existing event choices, first offered keepsake): 2 taps/sec completes [5,9,8] chapter days / 212.5 active seconds; 3 taps/sec [5,7,7] / 171.3 seconds; 4 taps/sec [4,6,6] / 160.0 seconds. These are simulated, not measured human session lengths. Physical phone playtesting remains required. GitHub's release workflow independently repeats clean import, tests and Web export before deploying.
