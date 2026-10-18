@@ -3,6 +3,6 @@
 [resource]
 script = ExtResource("1")
 titles = PackedStringArray("Finally, together again.", "La dolce vita, contigo.", "A one-way ticket. A whole new chapter.")
-illustrations = PackedStringArray("Denver", "Italy", "Final")
+illustrations = PackedStringArray("denver", "italy", "final")
 paragraphs = PackedStringArray("Dany lands in Denver. Josh is waiting with a hug that lasts longer than the flight. Monterrey feels far away, but home suddenly feels very close.", "Two coffees, one cobblestone street, and absolutely no agreement about where to eat. Dany and Josh discover that getting lost in Italy is better together.", "The last ticket is different. Dany is moving from Monterrey to the United States. There will be new routines, new adventures, and fewer goodbyes at airport security.\n\nThis time, they get to plan the ordinary days together.")
 ending = "There was no return ticket. Josh is waiting and their next chapter finally has the same address.\n\nTHE END\n\nFor every ‘one more flight’ that brought us here."
