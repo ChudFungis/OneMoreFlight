@@ -42,14 +42,17 @@ func _ready() -> void:
 	image.custom_minimum_size.y = 64
 	content.add_child(image)
 	add_label(content, item.title, 23, FlightStyle.BURGUNDY)
-	add_label(content, "Permanent keepsake" if is_relic else ("Refills collected: %d" % level if item.max_level == 0 else "Level %d / %d" % [level, item.max_level]), 15, FlightStyle.MUTED)
+	add_label(content, "Permanent keepsake" if is_relic else ("Level %d" % level if item.max_level == 0 else "Level %d / %d" % [level, item.max_level]), 15, FlightStyle.MUTED)
 	add_label(content, item.description.get_slice("\n", 0), 17, FlightStyle.INK)
 	add_label(content, "Effect", 15, FlightStyle.BURGUNDY)
 	add_label(content, item.description.get_slice("\n", 1), 16, FlightStyle.INK)
 	if is_relic and item.id == "bracelet":
 		add_label(content, "Applies to taps, passive work and event gifts. Interest is unaffected.", 15, FlightStyle.MUTED)
-	if not is_relic and item.id == "cabrito":
-		add_label(content, "Repeatable refill · %d / %d shared charges remaining" % [GameManager.burst_clicks, GameManager.balance.burst_cap], 15, FlightStyle.MUTED)
+	if not is_relic:
+		add_label(content, "Current: " + GameManager.ability_effect(item.id, level), 15, FlightStyle.MUTED)
+		add_label(content, "Next: " + GameManager.ability_effect(item.id, level + 1), 15, FlightStyle.MUTED)
+		if item.id == "love":
+			add_label(content, "Growth earned this chapter: +%.1f%% base tap value" % (GameManager.nicky_growth * 100), 15, FlightStyle.MUTED)
 	var done := Button.new()
 	done.text = "Close"
 	FlightStyle.style_button(done)

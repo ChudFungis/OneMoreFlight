@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "tips"
 title = "One Wish Willow"
-description = "One Wish Willow has granted another tiny wish. It might be getting out of hand.\n+5 base-tap equivalents each 7th tap per level; max 3 levels."
-effect = "tips"
-amount = 5
-max_level = 3
+description = "One Wish Willow grants something you can count on.\nReceive +10 base-tap equivalents per level at day-end."
+effect = "day_gift"
+amount = 10
+max_level = 0
 price = 0

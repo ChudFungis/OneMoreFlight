@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "flights"
 title = "Volaris Red-Eye"
-description = "A suspiciously cheap red-eye on Volaris. Sleep is optional, savings are not.\n-8% of remaining travel goal multiplier per level; max 2 selections per chapter."
+description = "A cheaper flight means the next trip is that much closer.\nEach level reduces the remaining ticket price by 8%."
 effect = "discount"
 amount = 0.08
-max_level = 2
+max_level = 0
 price = 0

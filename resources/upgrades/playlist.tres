@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "playlist"
 title = "Carín León on Repeat"
-description = "Carín León is on repeat. Just one more song before the day ends.\n+0.5 seconds every 5th tap per level; maximum 4 levels; maximum +2 seconds per workday from this ability, combined extension cap +6s."
+description = "One more song. One more moment to keep going.\nEvery 50 taps adds +0.5 seconds per level to this workday, with no daily extension cap."
 effect = "tap_time"
 amount = 0.5
-max_level = 4
+max_level = 0
 price = 0

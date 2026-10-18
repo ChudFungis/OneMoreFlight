@@ -7,7 +7,7 @@ A mobile-first, romantic incremental roguelike clicker about Dany’s Monterrey 
 Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait reference size is 390 × 844; smaller screens scroll. All actions use touch/mouse controls.
 
 1. Tap the home-screen heart to start a fresh adventure in Denver immediately. Your best completed adventure and five recent results stay saved. Results and Settings are the small controls below the heart.
-2. A 10-second workday starts automatically after a brief transition. Tap the large pixel heart. Abilities can extend it to 16 seconds. Reaching the flight goal ends the workday immediately. Money is travel savings.
+2. A 10-second workday starts automatically after a brief transition. Tap the large pixel heart. Girls’ Night Boost adds starting time; Carín León adds time every 50 taps, without an extension cap. Reaching the flight goal ends the workday immediately. Money is travel savings.
 3. After each below-goal workday, highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every third completed chapter day below the goal then presents one event with two beneficial choices. After decisions, the next workday begins automatically.
 4. Reach the savings milestone to enter the reunion story automatically on the goal-reaching tap or passive payout (or after end-of-day interest), skipping that day’s reward/event choices. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay, and the next chapter’s first workday begins automatically.
 5. Complete Denver, Italy, and the final one-way ticket to reach the ending.
@@ -45,3 +45,9 @@ Read [architecture](docs/ARCHITECTURE.md), [content and balance](docs/GAME_DESIG
 The gameplay collection lives in an icon-only travel suitcase; tap a packed item to inspect its level and exact effect. Larger collections scroll within the compact case.
 
 The v0.4 Cozy Pixel Arcade presentation bundles Baloo 2 locally (license in assets/fonts), shared tactile controls and crisp pixel icons. Colors, frames, button depth and typography roles are centralized in `scripts/ui/flight_style.gd`; see [UI design](docs/UI_DESIGN.md) for customization.
+
+## Nine permanent chapter abilities
+
+Ordinary ability levels are repeatable with no gameplay level cap and reset at each chapter; keepsakes remain permanent. Gringo Influence increases regular taps; Nicky Mode earns lasting tap-value growth at any tapping speed; FaceTime pays every tenth tap; Cabrito permanently grants a chance of double regular taps; Girls’ Night adds starting time; Carín León adds time every 50 taps; Volaris compounds ticket discounts; Willow pays guaranteed day-end cash; Princess pays 20% day-end interest at level one (+5 percentage points for each additional level).
+
+Combo counters and consumable Cabrito refills are removed. CEO, Jake Wants Meat and Jake’s Protection are archived outside the reward pool. Events and their existing temporary boosts are unchanged pending a separate event redesign. Reward cards and item details show current and next effects. See docs/GAME_DESIGN.md for exact arithmetic and migration.

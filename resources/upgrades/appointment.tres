@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "appointment"
 title = "Gringo Influence"
-description = "Josh’s gringo influence is rubbing off on Dany. Every tap gets a little more ridiculous.\n+25% regular tap income per level; maximum 4 levels."
+description = "Josh’s influence makes every tap worth a little more.\n+25% regular tap earnings per level, every workday this chapter."
 effect = "click"
 amount = 0.25
-max_level = 4
+max_level = 0
 price = 0

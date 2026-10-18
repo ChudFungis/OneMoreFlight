@@ -4,8 +4,8 @@
 script = ExtResource("1")
 id = "love"
 title = "Nicky Mode"
-description = "Nicky Mode activated. Every rapid tap makes the obsession stronger.\n+10% per combo step per level, maximum +90% overall; max 3 levels."
-effect = "combo"
-amount = 0.1
-max_level = 3
+description = "Nicky Mode gets stronger with every tap, at your own pace.\nEach tap adds 0.1% of the chapter’s base tap value per level to future regular taps; growth lasts this chapter."
+effect = "growth"
+amount = 0.001
+max_level = 0
 price = 0

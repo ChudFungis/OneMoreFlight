@@ -1,67 +1,45 @@
-# One More Flight — content and tuning (v0.3.3 flow)
+# One More Flight — nine-ability redesign
 
-The three chapters, story, artwork paths, ordinary-upgrade resets and permanent relics remain. The source is `One_More_Flight_Final_Codex_Spec.xlsx` (all five sheets reviewed). Economy & Mechanics records v0.1; it does not override the proposed content or confirmed rules. All existing content IDs are retained.
+This owner-approved ability roster supersedes the earlier combo, refill, time-budget and level-cap rules. Story, artwork, chapter goals, event choices and keepsakes are unchanged. Numeric values are starting tuning values, not a claim of final balance or measured human pacing.
 
-## Rules and provisional tuning
+## Ability roster
 
-Confirmed rules: 10-second base workdays; one free reward per below-goal completed workday; three unique viable choices when available; 65% new / 35% owned level-up selection independently for each card, conditional on remaining candidates; exactly one event on below-goal chapter days 3, 6, 9, etc.; no event penalties or ordinary upgrade costs. Savings now act as milestones, without a manual ticket purchase. Events avoid consecutive repeats within a chapter.
+All nine abilities last for the rest of the current chapter and can be selected repeatedly. max_level=0 means unlimited levels. Existing resource IDs remain stable.
 
-A workday now stops immediately when a tap or passive payout reaches the discounted goal, even with time remaining. Otherwise the timer ends it. End-of-day interest and day counts settle exactly once in either case.
-
-Order: settle work earnings and interest → check the discounted savings milestone. If reached, enter the story immediately and skip reward/event choices. Otherwise choose one reward → resolve the third-day event → automatic transition to the next workday. If a goal discount or event gift reaches the milestone after work, enter the story then. The event is selected at shift completion and saved alongside offers. Neither choice is rerolled by loading. Reward cards show NEW or the resulting LEVEL. Workday input, floating earnings, combo feedback, pause and autosave remain.
-
-The owner approved these gap resolutions: a shared +6-second extension cap; Cabrito can recur below 60 charges without a level cap; music has four levels; offer fewer than three cards if necessary; advance past the reward only when no candidates exist. Time abilities that cannot increase duration because fixed extensions already fill the cap are excluded.
-
-Proposed names and numeric balance values are implemented for testing, not promoted to final balance decisions. In particular, Volaris Red-Eye and Girls’ Night Boost remain provisional names. The v0.3.3 owner direction supersedes the workbook’s earlier two-day cadence; events now occur every third completed chapter day, with no probability roll. Final positive event choices override stale gamble/loss notes. No random-outcome or loss handler is needed.
-
-Tune amounts and levels in `resources/upgrades/*.tres`, events and relics in their matching folders, and shared timing/weight values in `resources/balance.tres`. Story prose stays in `resources/story.tres`.
-
-| Stable ID | Upgrade | Effect / maximum |
+| Stable ID | Ability | Effect at level L |
 | --- | --- | --- |
-| appointment | Gringo Influence | +25% regular tap income/level; 4 levels |
-| blessing | Jake's Protection | +25% event gift or burst charge payout/level; 2 levels |
-| cabrito | Cabrito Power | Refill 20 double-earnings regular taps; 60 shared charges |
-| cafecito | Jake Wants Meat | +2 seconds/day/level; 2 levels |
-| empire | CEO | +1 base-tap equivalent/sec/level during work; 3 levels |
-| facetime | FaceTime Date | +8 base taps every tenth tap/level; 3 levels |
-| flights | Volaris Red-Eye | Current ticket multiplier ×0.92/selection; 2 selections/chapter |
-| jar | Passive Income Princess | +2% savings interest/level at day end; 3 levels, 6% cap |
-| love | Nicky Mode | +10% per rapid combo step/level; 3 levels, +90% overall cap |
-| playlist | Carín León on Repeat | +0.5 seconds every fifth tap/level; 4 levels, +2 seconds/day |
-| tips | One Wish Willow | +5 base taps every seventh tap/level; 3 levels |
-| team | Girls’ Night Boost | +2 seconds/day/level; 2 levels; replaces old passive multiplier and immediate gift |
+| appointment | Gringo Influence | +25% regular tap income per level |
+| love | Nicky Mode | Each successful tap adds 0.1% × L of chapter base tap value to subsequent regular taps |
+| facetime | FaceTime Date | Every tenth tap adds 5 × L base-tap equivalents |
+| cabrito | Cabrito Power | Chance of doubling regular taps = 1 − 0.9^L (10%, 19%, 27.1%, …) |
+| team | Girls’ Night Boost | +L seconds at the start of every workday |
+| playlist | Carín León on Repeat | Every 50 taps adds 0.5 × L seconds to the current workday |
+| flights | Volaris Red-Eye | Each selection multiplies the remaining ticket price by 0.92 |
+| jar | Passive Income Princess | Day-end interest is 20% at level one, plus 5 percentage points per additional level |
+| tips | One Wish Willow | +10 × L base-tap equivalents at day-end |
 
-Fixed time from cafecito and team is applied first, capped at +6 seconds. Music uses the remaining shared budget, up to +2 seconds. A workday lasts 10–16 seconds. Combo uses the existing 0.6-second window and six-step counter. Interest is paid before the new reward, so a new interest level first affects the next day. Discounts compound against the current goal multiplier, retaining the old 50% floor. Passport applies its additional 12% reduction. Base tap income remains $5 with chapter scaling 1 / 2 / 3.5; goals remain $2,100 / $5,300 / $11,000.
+CEO (empire), Jake Wants Meat (cafecito), and Jake’s Protection (blessing) remain archived as files but are not preloaded in the ability catalog or offered. Their old artwork is retained for the future audit.
 
-All work earnings and event gifts receive Matching Underwear's +15%; interest does not. Steal Josh's Clothes gives +50% on the first ten regular taps. Unlimited FaceTime adds six base taps every tenth tap. Brian Merge gives two base taps/sec during work. Goodbye Kiss grants one Gringo Influence level after each chapter reset following acquisition.
+## Earnings and time
 
-## Events
+Base taps remain $5 / $10 / $17.50 by chapter. Base ticket goals remain $2,100 / $5,300 / $11,000. The base workday is ten seconds.
 
-Each event has two free positive outcomes. Gifts below are base-tap equivalents; bursts are double-earnings regular-tap charges. Jake's Protection multiplies the selected amount by 1.25 or 1.5, with fractional charge counts rounded up. All burst sources share the 60-charge cap; choosing burst at capacity adds zero charges, while the cash alternative remains available. Gifts also receive the earnings relic multiplier.
+Regular tap value is base × (1 + Gringo bonus + earned Nicky growth). Cabrito may double this regular component, independently of existing event charge boosts. The first-ten-tap hoodie keepsake and Matching Underwear retain their existing multipliers. FaceTime and Unlimited FaceTime add their base-value milestone bonuses separately, so Cabrito does not double those bonuses.
 
-| ID | Name | First choice | Second choice |
-| --- | --- | --- | --- |
-| call | Josh Is Calling... Again | Answer: gift 12 | Decline: burst 20 |
-| cancelled | Jake's Betrayal | Laugh: gift 8 | Attention: burst 15 |
-| dinner | One More Episode | Sleep: gift 8 | Watch: burst 15 |
-| gift | The Language Barrier | Help: gift 10 | Double down: burst 16 |
-| rain | The Domino Incident | Carefully: gift 8 | Dramatic play: burst 18 |
-| repair | Fede's Shopping List | Bring everything: burst 25 | Refuse: gift 6 |
-| sale | Customs Has Questions | Explain: gift 8 | Call Fede: burst 16 |
-| viral | Un Chico Serio | Serious: gift 12 | Truth: burst 20 |
+Nicky growth is earned after each tap’s payout, improves future taps, persists across workdays and saves, and resets at the chapter boundary. Buying a new Nicky level improves growth on subsequent taps; it does not retroactively multiply growth already earned. There is no combo, speed window or activation threshold.
 
-## Measured balance and concerns
+The 50-tap music counter resets each workday; there is no shared or daily extension cap. Higher levels add more time at every activation. Girls’ Night and Carín León stack fully. Work still ends immediately upon reaching the flight goal. Very high music levels can sustain a workday if tapping is sufficiently fast, but the savings milestone still ends it; no hidden anti-sustain cap was introduced.
 
-Seed 12345, selecting the first available preferred ability in order facetime/tips/love/appointment/empire/cafecito/flights, taking burst event alternatives and the first relic offer, stopping work immediately at the goal-reaching payout and completing chapters automatically at the settled milestone (winning-day choices skipped):
+At day-end, settle Willow’s cash (including the earnings keepsake multiplier), then Princess interest on the resulting savings. For example, $500 plus level-one Willow ($50 in Denver) and level-one Princess yields $660. With Princess alone it yields $600. Interest is not directly multiplied by Matching Underwear. Both payouts happen exactly once before milestone checking, and a newly chosen reward first benefits a later workday.
 
-| Taps/sec | Denver / Italy / Future days | Active work |
-| --- | --- | --- |
-| 2 | 7 / 8 / 8 | 217.5 s |
-| 3 | 6 / 6 / 7 | 175.3 s |
-| 4 | 5 / 5 / 6 | 143.8 s |
+Volaris has no old 50% discount floor. Each level reduces the remaining ticket price by 8%; Passport independently applies its 12% keepsake reduction. No time, level, Nicky-growth or interest gameplay caps were added. Finite-number validation on loaded data remains corruption protection.
 
-These accelerated simulations use the real rules; they do not measure human 10–15 minute session pacing. Later chapters at faster tapping rates fall below provisional 7–9 / 9–12 day targets. Milestone rewards plus permanent relics produce substantial scaling despite lower passive income and interest. Goals have deliberately not been retuned. The shared time cap makes some time builds mutually redundant; exclusion avoids offering fully ineffective additional time levels. Cabrito level labels count acquisitions, while its effect remains a fixed refill. Human testing and additional seeds are needed before locking balance.
+## Rewards, events and migration
 
-Automatic milestone validation retains the same goals and effects. The changed seeded results reflect the three-day event cadence and skipped winning-day choices changing subsequent RNG consumption; they are not a balance retune. Human playtime remains unmeasured.
+After each below-goal workday, offer three distinct abilities. Each card chooses the new category with 65% probability or owned with 35%, conditional on available candidates, then selects uniformly within the category. All-owned/all-new fallback remains supported. Cards and details show current → next effects.
 
-The overview/start button is removed from ordinary and chapter-start flow. A 0.4-second input-safe transition displays the existing heart before the workday clock starts. This delay is not counted as tapping time or workdays.
+After the reward, the existing event occurs on every third completed below-goal chapter day. Event choices, cash gifts, temporary double-tap charges (60 shared-charge limit), no-consecutive-repeat selection and persistence remain unchanged. Jake’s Protection is no longer offered, so events have no new amplifier. Negative automatic events are a separate future change.
+
+Snapshot version 4 persists Nicky growth and the 64-bit gameplay RNG state as a decimal string to avoid browser JSON rounding and reload rerolls. Versions 1–3 still load. Retired ability IDs are ignored; owned old Cabrito refill counts migrate to one permanent chance level; old combo fields are ignored and Nicky starts without fabricated historical growth. Existing levels of retained abilities use their new effects. Remaining time is validated against starting time plus music activations earned by that day’s taps, rather than an obsolete 16-second cap. Completed local results and settings retain their separate formats and are not erased.
+
+Human session duration and real-device interaction require playtesting. Seeded full-campaign simulation results belong in docs/VALIDATION.md; do not reuse timings measured under the old ability system.

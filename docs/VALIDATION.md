@@ -98,3 +98,20 @@ Headless and native full-suite checks: 10,884 checks, zero failures. Godot impor
 Owner-requested rule update: the goal-reaching tap now ends work immediately, rather than waiting out the timer. Passive earnings also stop at the crossing; advance_time caps passive elapsed time to avoid paying income for unplayed time. Both paths use the existing finish_shift settlement, counting one day and paying its interest once, then skipping rewards/events for the winning day. Above-goal legacy active saves settle on restore. The normal timer/extensions, tap formulas, relic/reset rules and results ledger remain.
 
 Godot import succeeds; headless and native foundation runs each pass 10,978 checks with no script errors. Tests cover immediate wins across all three discounted goals, interest once, blocked subsequent taps, disk restore without duplicate completion, savings reset, a three-day completed-run score, passive crossing and legacy active-save normalization. Existing interest-at-timer-expiry tests still pass. Seeded simulations retain [7,8,8], [6,6,7], [5,5,6] chapter days at 2/3/4 taps per second; the stepped driver now reports 217.5/175.3/143.8 seconds of active work due to early endings. These are simulations, not measured human playtimes. Physical browser/device play remains unverified.
+
+
+## Nine permanent chapter abilities
+
+Godot 4.7.2 headless regression passes 11,106 checks with zero failures. New coverage verifies no old level/time/discount caps, the nine-item reward pool, 65/35 weighting (6,499 new first cards / 10,000 trials), Cabrito chance distribution and RNG save continuation, regular-only critical hits, Nicky growth across taps/days/saves and chapter reset, repeated music activations, Willow-before-interest settlement exactly once, and legacy roster/refill migration. Existing chapter flow, local records, pause, collection layout and full-campaign reachability remain covered. Intentional invalid-results/save recovery warnings remain expected.
+
+Seed 12345, preference order facetime/tips/love/appointment/jar/team/flights, existing burst event alternatives and first offered keepsake:
+
+| Taps/sec | Denver / Italy / Future days | Active work |
+| --- | --- | --- |
+| 2 | 9 / 10 / 9 | 279.0 s |
+| 3 | 7 / 7 / 7 | 200.3 s |
+| 4 | 7 / 6 / 6 | 177.2 s |
+
+These are accelerated single-seed simulations, not measured human pacing. Goals are unchanged. Different choices/seeds and compounding interest can change the results. Extremely high music levels can sustain tapping until the finite chapter savings goal is reached; that is a consequence of the approved uncapped design.
+
+The single-thread Web release export succeeds at ../ability-web/index.html with no script/export errors. A second editor import in this restricted local session cannot save global editor settings; initial import completed resource processing. The native graphical runner exits before producing output in this session, so new screenshots/visual QA and physical-device/browser interaction are not claimed. Headless layout checks at 320/360/390/430/1024 logical widths still run; current/next descriptions need phone review. The GitHub PR workflow independently repeats clean import, the suite and Web export before any release. No live publication is part of this branch preparation.
