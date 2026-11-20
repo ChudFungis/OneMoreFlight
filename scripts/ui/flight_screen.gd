@@ -639,6 +639,7 @@ func build_flight_route() -> void:
 func build_reward_summary(fourth_title: String, fourth_value: String) -> void:
 	var grid := GridContainer.new()
 	grid.name = "RewardStats"
+	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
@@ -652,12 +653,15 @@ func build_reward_summary(fourth_title: String, fourth_value: String) -> void:
 	var previous := body
 	for index: int in range(entries.size()):
 		var panel := PanelContainer.new()
+		# Decorative stats must not consume swipes intended for the page scroll.
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var surface := FlightStyle.card()
 		surface.set_content_margin_all(8)
 		panel.add_theme_stylebox_override("panel", surface)
 		grid.add_child(panel)
 		var content := VBoxContainer.new()
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content.add_theme_constant_override("separation", 2)
 		panel.add_child(content)
 		body = content

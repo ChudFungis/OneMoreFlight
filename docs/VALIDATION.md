@@ -161,3 +161,9 @@ Events are no longer scheduled, applied or displayed; their definitions and cata
 The native Compatibility build launches successfully. Targeted 320×844 gameplay/reward screenshots were inspected; cards, four-box footer and suitcase remain readable, and confirming a reward logs transition directly. Physical mobile/browser checks remain outstanding.
 
 Seeded full-campaign simulations without events: 2 taps/sec completes [5,8,9] chapter days / 211.0 active seconds; 3 taps/sec [5,7,5] / 173.7 seconds; 4 taps/sec [4,6,6] / 153.8 seconds. These are accelerated single-seed estimates, not measured human pacing. No ability values or base goals were retuned.
+
+## Reward stats touch scrolling
+
+The reward summary grid, decorative panels and inner containers ignore pointer input, allowing drags begun over any stat box to reach the page ScrollContainer. Item buttons and ability cards retain their input behavior. Physical iPhone verification remains required.
+
+The native Godot build loads the change without script errors; the 320×640 reward layout was inspected. Desktop-injected touch events did not move the scroll offset, so that probe does not establish iPhone gesture behavior. Confirm swiping over all four stat boxes on the deployed iPhone build.
