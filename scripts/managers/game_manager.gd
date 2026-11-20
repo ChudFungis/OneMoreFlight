@@ -19,16 +19,11 @@ var upgrades: Dictionary = {}
 var relics: Array = []
 var phase: String = "ready"
 var offers: Array = []
-var event_id: String = ""
 var goal_multiplier: float = 1.0
 var remaining: float = 0.0
 var shift_clicks: int = 0
-var event_applied: bool = false
-var event_result: String = ""
-var chapter_event_seconds: float = 0.0
-var chapter_event_discount: float = 1.0
-var pending_event: bool = false
-var last_event_id: String = ""
+var legacy_bonus_seconds: float = 0.0
+var legacy_goal_discount: float = 1.0
 var nicky_growth: float = 0.0
 var save_clock: float = 0.0
 var save_error: bool = false
@@ -80,14 +75,9 @@ func new_game() -> void:
 	upgrades = {}
 	relics = []
 	goal_multiplier = 1.0
-	event_applied = false
-	event_result = ""
-	chapter_event_seconds = 0
-	chapter_event_discount = 1
-	pending_event = false
-	last_event_id = ""
+	legacy_bonus_seconds = 0
+	legacy_goal_discount = 1
 	offers = []
-	event_id = ""
 	phase = "transition"
 	remaining = 0
 	shift_clicks = 0
@@ -99,7 +89,7 @@ func new_game() -> void:
 
 func has_save() -> bool:
 	var version: Variant = SaveManager.progression.get("game_version")
-	return version == 1 or version == 2 or version == 3 or version == 4 or version == 5
+	return version == 1 or version == 2 or version == 3 or version == 4 or version == 5 or version == 6
 
 func continue_game() -> void:
 	if not restore(SaveManager.progression):
@@ -109,14 +99,12 @@ func continue_game() -> void:
 
 func set_phase(value: String) -> void:
 	phase = value
-	if phase == "event":
-		apply_event()
 	persist()
 	phase_changed.emit()
 	changed.emit()
 
 func fixed_extension() -> float:
-	return power("team") + chapter_event_seconds
+	return power("team") + legacy_bonus_seconds
 
 func eligible_upgrade(item: FlightDefinition) -> bool:
 	if item == null or FlightCatalog.find_item(FlightCatalog.UPGRADES, item.id) == null:
@@ -230,15 +218,6 @@ func finish_shift() -> void:
 	if _complete_chapter():
 		return
 	offers = upgrade_offers()
-	pending_event = days % maxi(1, balance.event_interval) == 0
-	event_id = ""
-	event_applied = false
-	event_result = ""
-	if pending_event:
-		var events := random_ids(FlightCatalog.EVENTS, 1, [last_event_id])
-		if events.is_empty():
-			events = random_ids(FlightCatalog.EVENTS, 1)
-		event_id = events[0]
 	if offers.is_empty():
 		complete_reward()
 	else:
@@ -248,7 +227,7 @@ func complete_reward() -> void:
 	if _complete_chapter():
 		return
 	offers = []
-	set_phase("event" if pending_event else "transition")
+	set_phase("transition")
 
 func random_ids(items: Array, size_wanted: int, excluded: Array = []) -> Array:
 	var pool: Array = []
@@ -278,35 +257,6 @@ func buy_upgrade(id: String) -> bool:
 		notice.emit("Your Biggest Fan! " + item.title + " gained an extra level.")
 	return true
 
-func apply_event() -> bool:
-	# Resolve on entry/reveal, before rendering. Continue never awards the result.
-	if phase != "event" or event_applied:
-		return false
-	var item := FlightCatalog.find_item(FlightCatalog.EVENTS, event_id)
-	if item == null:
-		return false
-	match item.effect:
-		"gift":
-			var gift := item.amount * base_income() * global_multiplier()
-			money += gift
-			event_result = "+$%.2f savings" % gift
-		"loss":
-			# Earnings bonuses never amplify a penalty; savings cannot become debt.
-			var lost := minf(money, item.amount * base_income())
-			money -= lost
-			event_result = "−$%.2f savings" % lost if lost > 0 else "No savings lost"
-		"chapter_time":
-			chapter_event_seconds += item.amount
-			event_result = "+%.0f second to every workday this chapter" % item.amount
-		"ticket_discount":
-			chapter_event_discount *= 1.0 - item.amount
-			goal_multiplier *= 1.0 - item.amount
-			event_result = "Ticket price −%.0f%%" % (item.amount * 100)
-		_:
-			return false
-	event_applied = true
-	return true
-
 func apply_upgrade(item: FlightDefinition) -> void:
 	if item == null or not eligible_upgrade(item):
 		return
@@ -319,30 +269,13 @@ func next_day() -> void:
 	if phase == "upgrades" and offers.is_empty():
 		complete_reward()
 
-func resolve_event() -> void:
-	if phase != "event":
-		return
-	# A migrated event may be waiting to reveal, but can still settle only once.
-	apply_event()
-	if not event_applied:
-		return
-	last_event_id = event_id
-	event_id = ""
-	pending_event = false
-	event_applied = false
-	event_result = ""
-	if not _complete_chapter():
-		set_phase("transition")
-
 func _complete_chapter() -> bool:
 	# Workdays settle once at timer expiry or immediately upon reaching the goal.
-	if phase not in ["work", "ready", "transition", "upgrades", "event"] or days <= 0 or money < goal() or chapter in completed_chapters:
+	if phase not in ["work", "ready", "transition", "upgrades"] or days <= 0 or money < goal() or chapter in completed_chapters:
 		return false
 	if phase == "work" and remaining > 0:
 		return false
 	offers = []
-	event_id = ""
-	pending_event = false
 	remaining = 0
 	if chapter not in completed_chapters:
 		completed_chapters.append(chapter)
@@ -383,12 +316,8 @@ func choose_relic(id: String) -> void:
 	days = 0
 	upgrades = {}
 	goal_multiplier = 1
-	event_applied = false
-	event_result = ""
-	chapter_event_seconds = 0
-	chapter_event_discount = 1
-	pending_event = false
-	last_event_id = ""
+	legacy_bonus_seconds = 0
+	legacy_goal_discount = 1
 	remaining = 0
 	nicky_growth = 0.0
 	shift_clicks = 0
@@ -398,18 +327,18 @@ func choose_relic(id: String) -> void:
 	set_phase("transition")
 
 func snapshot() -> Dictionary:
-	return {"game_version": 5, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
+	return {"game_version": 6, "run_attempt": run_attempt, "chapter_days": chapter_days.duplicate(), "run_new_best": run_new_best, "chapter": chapter, "money": money, "days": days, "total_days": total_days,
 		"completed_chapters": completed_chapters.duplicate(), "complete": complete, "upgrades": upgrades.duplicate(),
-		"relics": relics.duplicate(), "phase": phase, "offers": offers.duplicate(), "event_id": event_id,
+		"relics": relics.duplicate(), "phase": phase, "offers": offers.duplicate(),
 		"goal_multiplier": goal_multiplier, "remaining": remaining, "shift_clicks": shift_clicks,
-		"event_applied": event_applied, "event_result": event_result, "chapter_event_seconds": chapter_event_seconds, "chapter_event_discount": chapter_event_discount, "pending_event": pending_event, "last_event_id": last_event_id, "nicky_growth": nicky_growth, "rng_state": str(rng.state)}
+		"legacy_bonus_seconds": legacy_bonus_seconds, "legacy_goal_discount": legacy_goal_discount, "nicky_growth": nicky_growth, "rng_state": str(rng.state)}
 
 func persist() -> void:
 	SaveManager.progression = snapshot()
 	save_error = SaveManager.save_data() != OK
 
 func restore(data: Dictionary) -> bool:
-	if data.get("game_version") != 1 and data.get("game_version") != 2 and data.get("game_version") != 3 and data.get("game_version") != 4 and data.get("game_version") != 5:
+	if data.get("game_version") != 1 and data.get("game_version") != 2 and data.get("game_version") != 3 and data.get("game_version") != 4 and data.get("game_version") != 5 and data.get("game_version") != 6:
 		return false
 	run_attempt = int(safe_number(data.get("run_attempt"), 0, 2000000000))
 	run_new_best = data.get("run_new_best", false) == true
@@ -445,66 +374,44 @@ func restore(data: Dictionary) -> bool:
 	for id: Variant in data.get("offers", []) if data.get("offers") is Array else []:
 		if id is String and FlightCatalog.find_item(catalog, id) != null and id not in offers:
 			offers.append(id)
-	event_id = str(data.get("event_id", ""))
-	if phase == "event" and FlightCatalog.find_item(FlightCatalog.EVENTS, event_id) == null:
-		phase = "upgrades"
-	chapter_event_seconds = safe_number(data.get("chapter_event_seconds"), 0, 1e12) if data.get("game_version") == 5 else 0.0
-	chapter_event_discount = safe_number(data.get("chapter_event_discount"), 1, 1) if data.get("game_version") == 5 else 1.0
-	goal_multiplier = pow(1.0 - FlightCatalog.find_item(FlightCatalog.UPGRADES, "flights").amount, count("flights")) * chapter_event_discount
+	# Retain bonuses already earned in older saves, without running any event.
+	legacy_bonus_seconds = safe_number(data.get("legacy_bonus_seconds", data.get("chapter_event_seconds")), 0, 1e12)
+	legacy_goal_discount = safe_number(data.get("legacy_goal_discount", data.get("chapter_event_discount")), 1, 1)
+	goal_multiplier = pow(1.0 - FlightCatalog.find_item(FlightCatalog.UPGRADES, "flights").amount, count("flights")) * legacy_goal_discount
 	remaining = safe_number(data.get("remaining"), 0, 1e12)
 	shift_clicks = int(safe_number(data.get("shift_clicks"), 0, 100000))
-	event_applied = data.get("game_version") == 5 and data.get("event_applied", false) == true and phase == "event"
-	var saved_result: Variant = data.get("event_result", "")
-	event_result = saved_result.substr(0, 160) if event_applied and saved_result is String else ""
-	pending_event = data.get("pending_event", false) == true
-	last_event_id = str(data.get("last_event_id", ""))
-	nicky_growth = safe_number(data.get("nicky_growth"), 0, 1e12) if data.get("game_version") == 4 or data.get("game_version") == 5 else 0.0
+	nicky_growth = safe_number(data.get("nicky_growth"), 0, 1e12) if int(data.get("game_version")) >= 4 else 0.0
 	# Store 64-bit RNG state as text so browser JSON never rounds it.
 	var saved_rng: Variant = data.get("rng_state")
 	if saved_rng is String and saved_rng.is_valid_int():
 		rng.state = int(saved_rng)
 	# Legacy Cabrito counted consumable refills, not permanent chance levels.
-	if data.get("game_version") != 4 and data.get("game_version") != 5 and count("cabrito") > 0:
+	if int(data.get("game_version")) < 4 and count("cabrito") > 0:
 		upgrades["cabrito"] = 1
-	# v0.1 decisions are retained, but old shops become one mandatory free reward.
-	# Move legacy events behind their unclaimed free reward, retaining the event ID.
-	if data.get("game_version") == 1:
-		pending_event = phase == "event"
-		if pending_event:
-			phase = "upgrades"
-	# Pending decisions migrate to the current chapter-local three-day schedule.
-	if phase in ["upgrades", "event"]:
-		pending_event = days > 0 and days % maxi(1, balance.event_interval) == 0
-		if not pending_event:
-			event_id = ""
-			if phase == "event":
-				phase = "transition"
-	if pending_event and FlightCatalog.find_item(FlightCatalog.EVENTS, event_id) == null:
-		event_id = random_ids(FlightCatalog.EVENTS, 1, [last_event_id])[0]
+	# Event saves have already completed their daily reward. Discard the pending
+	# outcome and resume work, preserving settled savings and day counts.
+	if phase == "event":
+		phase = "transition"
+		offers = []
 	if phase == "upgrades":
 		offers = offers.filter(func(id: String) -> bool:
 			return eligible_upgrade(FlightCatalog.find_item(FlightCatalog.UPGRADES, id)))
 		if offers.is_empty():
 			offers = upgrade_offers()
 		if offers.is_empty():
-			phase = "event" if pending_event else "transition"
+			phase = "transition"
 	# No gameplay extension cap: validate against time actually earned by taps.
 	var earned_time := floorf(float(shift_clicks) / balance.music_tap_interval) * power("playlist")
 	remaining = minf(remaining, balance.shift_seconds + fixed_extension() + earned_time)
 	save_clock = 0
 	if phase == "work" and money >= goal():
 		finish_shift()
-	# Already-settled legacy goals take priority over an old pending event.
-	if phase == "event" and data.get("game_version") != 5 and money >= goal():
-		_complete_chapter()
-	elif phase == "event":
-		if apply_event():
-			persist()
-	# A newly revealed event stays visible until Continue, even if it wins the trip.
 	if phase in ["ready", "upgrades", "transition"]:
 		_complete_chapter()
 	if phase == "ready":
 		phase = "transition"
+	if int(data.get("game_version")) < 6:
+		persist()
 	return true
 
 func safe_number(value: Variant, fallback: float, maximum: float) -> float:

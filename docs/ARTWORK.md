@@ -16,7 +16,7 @@ Content names may change; filename IDs must remain stable. The existing shared f
 ## Replacement workflow
 
 1. Place a compact PNG or WebP at the listed folder with the same ID stem. For example, replace Fede's Shopping List using `assets/art/events/repair.png`; the main heart uses `assets/art/heart/tap.png`.
-2. Keep the SVG in place as a fallback. Resolution order is an explicit content **Icon** texture, then PNG, WebP, SVG, then shared fallback. The optional Icon field applies to upgrades, relics and events; remove an explicit assignment if you want filenames to take precedence.
+2. When replacing an item illustration, remove its previous image and associated .import metadata; the owner prefers one current image per item. Resolution order is an explicit content **Icon** texture, then PNG, WebP, SVG, then shared fallback. The optional Icon field applies to upgrades, relics and events; remove an explicit assignment if you want filenames to take precedence.
 3. Open Godot and let it import the new image. No gameplay or UI script edit is required. Re-export the game afterward; the existing all-resources Web preset includes imported path-based artwork.
 4. Inspect narrow portrait and desktop layouts. Images fit their frame without cropping, so keep important elements inside the central 80% and avoid embedded text. Transparent margins are supported. Landscape and square frames scale independently of original texture dimensions.
 
@@ -49,3 +49,41 @@ Resource files use readable ability names. Artwork paths and save IDs remain sta
 | `norteno_playlist.tres` | `playlist` |
 | `well_rested.tres` | `team` |
 | `one_wish_willow.tres` | `tips` |
+
+Gringo Influence now uses the owner-supplied `assets/art/upgrades/appointment.png`. The original PNG is preserved without edits; the stable `appointment` art/save ID remains unchanged. The superseded SVG and its import metadata have been removed. This PNG is used across reward cards, suitcase icons and details. No gameplay Resource or effect changed.
+
+Cabrito Power now uses the unmodified owner-supplied `assets/art/upgrades/cabrito.png`; its old SVG/import metadata have been deleted. Future item replacements should likewise retain only the new artwork for that item. Stable IDs and the shared missing-image fallback remain unchanged.
+
+Well Rested now uses the unmodified owner-supplied `assets/art/upgrades/team.png`. Its superseded SVG and import metadata are removed; the stable `team` mapping remains unchanged.
+
+FaceTime Date uses the owner-supplied `assets/art/upgrades/facetime.png`; the previous SVG/import metadata are removed. Installed without running tests, as requested.
+
+Norteno Playlist uses the owner-supplied `assets/art/upgrades/playlist.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Volaris Red-Eye uses the owner-supplied `assets/art/upgrades/flights.png`; its superseded SVG/import metadata are deleted. Installed without running tests, as requested for artwork replacements.
+
+Passive Income Princess uses the owner-supplied `assets/art/upgrades/jar.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Nicky Mode uses the owner-supplied `assets/art/upgrades/love.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+The tap heart SVG now uses smaller stepped edges, slightly softened joins, rose shading and warm highlights to coordinate with the illustrated upgrades. Its existing path, dimensions, touch area and animation remain unchanged. Replaced in place without backup artwork or tests, following the current artwork workflow.
+
+One Wish Willow uses the owner-supplied `assets/art/upgrades/tips.png`; its superseded SVG/import metadata are deleted. Installed without running tests, as requested.
+
+Steal Josh’s Clothes uses the owner-supplied `assets/art/relics/hoodie.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Goodbye Kiss uses the owner-supplied `assets/art/relics/kiss.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Matching Underwear uses the owner-supplied `assets/art/relics/bracelet.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Lip-Stained Passport uses the owner-supplied `assets/art/relics/passport.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Mind Reader uses the owner-supplied `assets/art/relics/postcard.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Your Biggest Fan uses the owner-supplied `assets/art/relics/unlimited.png`; its superseded SVG/import metadata are deleted. Installed without running tests, per the current artwork replacement preference.
+
+Denver reunion story uses the owner-provided airport illustration at assets/art/story/denver.png. The previous denver.svg and its import metadata were removed; the stable story ID remains denver.
+
+Italy story uses the owner-provided seaside illustration at assets/art/story/italy.png. The previous italy.svg and its import metadata were removed; the stable story ID remains italy.
+
+Final move-in story uses the owner-provided homecoming illustration at assets/art/story/final.png. The previous final.svg and its import metadata were removed; the stable story ID remains final.

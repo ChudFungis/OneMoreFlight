@@ -19,16 +19,7 @@ const RELICS := [
 	preload("res://resources/relics/bracelet.tres"),
 	preload("res://resources/relics/postcard.tres"),
 ]
-const EVENTS := [
-	preload("res://resources/events/cancelled.tres"),
-	preload("res://resources/events/gift.tres"),
-	preload("res://resources/events/call.tres"),
-	preload("res://resources/events/sale.tres"),
-	preload("res://resources/events/repair.tres"),
-	preload("res://resources/events/viral.tres"),
-	preload("res://resources/events/dinner.tres"),
-	preload("res://resources/events/rain.tres"),
-]
+
 static func find_item(items: Array, id: String) -> FlightDefinition:
 	for item: FlightDefinition in items:
 		if item.id == id:

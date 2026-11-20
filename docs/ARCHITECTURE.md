@@ -1,19 +1,21 @@
 # Gameplay architecture
 
+Events have been removed (snapshot v6). Current flow is `transition → work → [milestone: story | upgrades → transition]`. Legacy event phases migrate directly to transition without applying an outcome; already-earned time/discount benefits survive only until chapter reset. Event scheduling, outcome APIs, catalog and screen are deleted. Historical event sections below describe earlier versions only.
+
 Current ability rules are documented in docs/GAME_DESIGN.md. Earlier version sections below are historical where they describe combo, consumable Cabrito, capped time, old interest, event options or temporary event charges.
 
 The original four autoloads and persistent `Main` scene remain. The renderer remains Compatibility. No dependency or global event bus was added.
 
 ## Ownership
 
-- **GameManager**: campaign state, income rules, weighted free offers, scheduled events, savings milestones, chapters and relics. `advance_time(delta)` is shared by real-time processing and deterministic tests. UI never calculates rewards. `changed` updates counters, `phase_changed` rebuilds the decision view, `earned` creates feedback, and `notice` supports gameplay notices.
+- **GameManager**: campaign state, income rules, weighted free offers, savings milestones, chapters and relics. `advance_time(delta)` is shared by real-time processing and deterministic tests. UI never calculates rewards. `changed` updates counters, `phase_changed` rebuilds the decision view, `earned` creates feedback, and `notice` supports gameplay notices.
 - **SceneManager**: original Screens/Overlays hosts, navigation, pause/resume and Settings return destination. Pausing freezes the tree, saves progress and preserves the game scene. All overlays process while paused. Browser fullscreen is not applied automatically.
 - **SaveManager**: validated audio/display settings and a versioned campaign dictionary in `user://save_data.json`. It reports open/write errors. Campaign numeric values, IDs and phases are validated by GameManager on restore. Saving is a local JSON file, not cloud synchronization or an atomic backup system.
 - **AudioManager**: Music/SFX buses and saved volume levels, ready for future streams. No audio assets are required to play.
 
 ## Campaign flow
 
-`transition → work → [milestone: story | upgrades → optional third-day event → transition]`. A goal-reaching tap or passive payout immediately ends the current workday; otherwise it ends when the timer expires. Day counts and end-of-day interest settle once before chapter completion. A reached milestone enters the story immediately and skips that day’s upgrade/event. Below-goal days retain the usual choices and schedule. A discount reward or event gift that reaches the milestone after work also enters the story immediately.
+`transition → work → [milestone: story | upgrades → transition]`. A goal-reaching tap or passive payout immediately ends the current workday; otherwise it ends when the timer expires. Day counts and end-of-day interest settle once before chapter completion. A reached milestone enters the story immediately and skips that day’s upgrade/event. Below-goal days retain the usual choices and schedule. A discount reward or event gift that reaches the milestone after work also enters the story immediately.
 
 A reached milestone leads to `story → relic → transition` in the next chapter. Chapter 3 instead leads to `story → ending`. Completion is saved on the final trip; continuing during its story still shows that story. The internal restore API can still restore an ending for compatibility; the home screen deliberately offers only a fresh start.
 

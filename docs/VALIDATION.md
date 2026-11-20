@@ -153,3 +153,11 @@ Godot 4.7.2 headless regression passes 11,636 checks with zero failures. Tests c
 Current single-seed full-campaign simulations: 2 taps/sec completes [5,9,8] chapter days / 214.5 active seconds; 3 taps/sec [5,7,7] / 179.3 seconds; 4 taps/sec [5,6,6] / 156.5 seconds. These use the real rules and automatic events; they are not human pacing measurements. Goals/ability amounts were not retuned.
 
 New native screenshots and physical mobile-browser checks are not claimed because graphical launch is unavailable in this session. The existing headless portrait/desktop layout checks still run. GitHub's PR workflow independently verifies clean import, tests and single-thread Web export before the approved release.
+
+## Event removal (snapshot v6)
+
+Events are no longer scheduled, applied or displayed; their definitions and catalog/UI/outcome code are removed. Godot 4.7.2 editor import succeeds, and the headless suite passes 11,539 checks with zero failures. Only intentional corrupt-save/results recovery warnings remain. Coverage includes direct reward-to-transition flow across all three chapters, duplicate-reward guards, chapter resets, final personal-best day counts, pending-event migration for versions 1–6 without savings changes, preserved unclaimed offers, and earned legacy bonus migration. A manual test fixture now resets its Volaris multiplier together with its manually cleared abilities.
+
+The native Compatibility build launches successfully. Targeted 320×844 gameplay/reward screenshots were inspected; cards, four-box footer and suitcase remain readable, and confirming a reward logs transition directly. Physical mobile/browser checks remain outstanding.
+
+Seeded full-campaign simulations without events: 2 taps/sec completes [5,8,9] chapter days / 211.0 active seconds; 3 taps/sec [5,7,5] / 173.7 seconds; 4 taps/sec [4,6,6] / 153.8 seconds. These are accelerated single-seed estimates, not measured human pacing. No ability values or base goals were retuned.

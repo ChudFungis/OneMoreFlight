@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="384" height="336" viewBox="0 0 32 28"><rect x="4" y="0" width="4" height="4" fill="#752b4b"/><rect x="8" y="0" width="4" height="4" fill="#752b4b"/><rect x="20" y="0" width="4" height="4" fill="#752b4b"/><rect x="24" y="0" width="4" height="4" fill="#752b4b"/><rect x="0" y="4" width="4" height="4" fill="#752b4b"/><rect x="4" y="4" width="4" height="4" fill="#e65a87"/><rect x="8" y="4" width="4" height="4" fill="#e65a87"/><rect x="12" y="4" width="4" height="4" fill="#752b4b"/><rect x="16" y="4" width="4" height="4" fill="#752b4b"/><rect x="20" y="4" width="4" height="4" fill="#e65a87"/><rect x="24" y="4" width="4" height="4" fill="#e65a87"/><rect x="28" y="4" width="4" height="4" fill="#752b4b"/><rect x="0" y="8" width="4" height="4" fill="#752b4b"/><rect x="4" y="8" width="4" height="4" fill="#e65a87"/><rect x="8" y="8" width="4" height="4" fill="#ffd1ce"/><rect x="12" y="8" width="4" height="4" fill="#e65a87"/><rect x="16" y="8" width="4" height="4" fill="#e65a87"/><rect x="20" y="8" width="4" height="4" fill="#e65a87"/><rect x="24" y="8" width="4" height="4" fill="#e65a87"/><rect x="28" y="8" width="4" height="4" fill="#752b4b"/><rect x="0" y="12" width="4" height="4" fill="#752b4b"/><rect x="4" y="12" width="4" height="4" fill="#e65a87"/><rect x="8" y="12" width="4" height="4" fill="#e65a87"/><rect x="12" y="12" width="4" height="4" fill="#e65a87"/><rect x="16" y="12" width="4" height="4" fill="#e65a87"/><rect x="20" y="12" width="4" height="4" fill="#e65a87"/><rect x="24" y="12" width="4" height="4" fill="#e65a87"/><rect x="28" y="12" width="4" height="4" fill="#752b4b"/><rect x="4" y="16" width="4" height="4" fill="#752b4b"/><rect x="8" y="16" width="4" height="4" fill="#e65a87"/><rect x="12" y="16" width="4" height="4" fill="#e65a87"/><rect x="16" y="16" width="4" height="4" fill="#e65a87"/><rect x="20" y="16" width="4" height="4" fill="#e65a87"/><rect x="24" y="16" width="4" height="4" fill="#752b4b"/><rect x="8" y="20" width="4" height="4" fill="#752b4b"/><rect x="12" y="20" width="4" height="4" fill="#e65a87"/><rect x="16" y="20" width="4" height="4" fill="#e65a87"/><rect x="20" y="20" width="4" height="4" fill="#752b4b"/><rect x="12" y="24" width="4" height="4" fill="#752b4b"/><rect x="16" y="24" width="4" height="4" fill="#752b4b"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="336" viewBox="0 0 64 56">
+  <defs>
+    <linearGradient id="rose" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#ff9b9b"/>
+      <stop offset="0.42" stop-color="#f46d94"/>
+      <stop offset="1" stop-color="#cb3c70"/>
+    </linearGradient>
+    <clipPath id="heart">
+      <path d="M12 2H22V4H26V6H30V8H32V6H36V4H40V2H50V4H54V6H58V10H60V14H62V24H60V30H56V34H52V38H48V42H44V46H40V50H36V54H28V50H24V46H20V42H16V38H12V34H8V30H4V24H2V14H4V10H6V6H10V4H12Z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#heart)">
+    <path fill="url(#rose)" d="M0 0H64V56H0Z"/>
+    <path fill="#a92e5b" opacity="0.38" d="M58 12H62V26H58V32H54V36H50V40H46V44H42V48H38V52H34V56H26V52H30V48H34V44H38V40H42V36H46V32H50V26H54V20H58Z"/>
+    <path fill="#ffb2b5" opacity="0.65" d="M10 6H22V8H12V10H8V14H6V24H4V14H6V10H10ZM42 6H50V8H54V10H56V14H54V12H50V10H42Z"/>
+    <path fill="#fff2d9" d="M12 10H20V12H22V14H18V16H14V20H10V14H12Z"/>
+    <path fill="#ffd9d1" opacity="0.7" d="M10 22H14V26H12V28H10ZM42 8H48V10H42Z"/>
+  </g>
+  <path d="M12 2H22V4H26V6H30V8H32V6H36V4H40V2H50V4H54V6H58V10H60V14H62V24H60V30H56V34H52V38H48V42H44V46H40V50H36V54H28V50H24V46H20V42H16V38H12V34H8V30H4V24H2V14H4V10H6V6H10V4H12Z" fill="none" stroke="#762b4b" stroke-width="2" stroke-linejoin="round"/>
+</svg>

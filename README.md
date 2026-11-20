@@ -8,8 +8,8 @@ Open `project.godot` in **Godot 4.7.2 standard** and press **F5**. The portrait 
 
 1. Tap the home-screen heart to start a fresh adventure in Denver immediately. Your best completed adventure and five recent results stay saved. Results and Settings are the small controls below the heart.
 2. A 10-second workday starts automatically after a brief transition. Tap the large pixel heart. Well Rested adds starting time; Norteno Playlist adds time every 50 taps, without an extension cap. Reaching the flight goal ends the workday immediately. Money is travel savings.
-3. After each below-goal workday, a one-second day-complete animation leads to the free choices. Highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. Every third completed chapter day below the goal then reveals one automatic positive or negative event. Its result is saved immediately; Continue acknowledges it without choosing an outcome. After decisions, the next workday begins automatically.
-4. Reach the savings milestone to enter the reunion story automatically on the goal-reaching tap or passive payout (or after end-of-day interest), skipping that day’s reward/event choices. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay, and the next chapter’s first workday begins automatically.
+3. After each below-goal workday, a one-second day-complete animation leads to the free choices. Highlight a card and confirm exactly one free reward: a new ability or an owned ability’s next level. After decisions, the next workday begins automatically.
+4. Reach the savings milestone to enter the reunion story automatically on the goal-reaching tap or passive payout (or after end-of-day interest), skipping that day’s reward choices. Read the reunion scene and choose one of three permanent relics. Money and ordinary upgrades reset for the next chapter; relics stay, and the next chapter’s first workday begins automatically.
 5. Complete Denver, Italy, and the final one-way ticket to reach the ending.
 
 Pause / Save freezes work; Settings and Main Menu remain available. Losing application focus pauses the campaign. The game saves after decisions, when pausing, and every two seconds of active work. No offline earnings or real-money purchases. Reduced motion is available in Settings. Audio buses/settings are retained; this version intentionally has no soundtrack.
@@ -23,7 +23,7 @@ Pause / Save freezes work; Settings and Main Menu remain available. Losing appli
 - `scripts/ui/`: shared portrait screen presentation and theme.
 - `resources/balance.tres`: economy/timer/probability knobs.
 - `resources/story.tres`: replaceable chapter prose and illustration IDs.
-- `resources/upgrades/`, `relics/`, `events/`: editable content definitions.
+- `resources/upgrades/`, `relics/`: editable content definitions.
 - `assets/art/`: replaceable story and icon artwork; [exact paths](docs/ARTWORK.md).
 - `tests/`: deterministic checks and complete-campaign economy simulations.
 
@@ -50,8 +50,8 @@ The v0.4 Cozy Pixel Arcade presentation bundles Baloo 2 locally (license in asse
 
 Ordinary ability levels are repeatable with no gameplay level cap and reset at each chapter; keepsakes remain permanent. Gringo Influence increases regular taps; Nicky Mode earns lasting tap-value growth at any tapping speed; FaceTime pays every tenth tap; Cabrito permanently grants a chance of double regular taps; Well Rested adds starting time; Norteno Playlist adds time every 50 taps; Volaris compounds ticket discounts; Willow pays guaranteed day-end cash; Princess pays 20% day-end interest at level one (+5 percentage points for each additional level).
 
-Combo counters and consumable Cabrito refills are removed. CEO, Jake Wants Meat and Jake’s Protection are retired; their unused ability Resources have been removed. Events now have one automatic outcome; no event choices or temporary tap charges remain. Reward cards and item details show current and next effects. See docs/GAME_DESIGN.md for exact arithmetic and migration.
+Combo counters and consumable Cabrito refills are removed. CEO, Jake Wants Meat and Jake’s Protection are retired; their unused ability Resources have been removed. Events are removed; rewards lead directly into the next workday. Reward cards and item details show current and next effects. See docs/GAME_DESIGN.md for exact arithmetic and migration.
 
-## Automatic events
+## Event removal
 
-There are four positive and four negative events, selected uniformly with no consecutive repeats. Positive outcomes grant cash, a chapter-long extra workday second, or a 3% ticket discount. Negative outcomes deduct a modest chapter-scaled cash amount, never below zero. Event bonuses/discounts stack within the chapter and reset at the next chapter; cash remains ordinary savings. A persisted applied flag prevents a reload, redraw or repeated Continue tap from applying the same event twice. An event that earns the trip still displays its result before Continue opens the story. Completed local score history is preserved.
+No events are scheduled, applied or displayed. Snapshot version 6 loads versions 1–5, discards pending events without changing savings or replaying a reward, and preserves already-earned chapter time/discount bonuses until the normal chapter reset. Existing unclaimed ability offers remain mandatory and unchanged.

@@ -143,7 +143,7 @@ func rebuild() -> void:
 		body.modulate.a = 0
 		create_tween().tween_property(body, "modulate:a", 1.0, FlightStyle.ENTER_SECONDS)
 	if view == "game":
-		if GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades", "event"]:
+		if GameManager.phase == "story" and last_phase in ["ready", "work", "upgrades"]:
 			celebrate("One flight closer ✦")
 		if GameManager.phase == "ending" and last_phase != "ending":
 			celebrate("You made it!", true)
@@ -387,7 +387,7 @@ func close() -> void:
 		show_notice("Couldn’t save. Please try again before closing.")
 
 func build_game() -> void:
-	var shown_day := GameManager.days if GameManager.phase in ["upgrades", "event"] else GameManager.days + 1
+	var shown_day := GameManager.days if GameManager.phase in ["upgrades"] else GameManager.days + 1
 	label_text("ONE MORE FLIGHT   /   CHAPTER %d · DAY %d" % [GameManager.chapter + 1, shown_day], 13, FlightStyle.MUTED)
 	if GameManager.phase in ["work", "ready", "transition"]:
 		build_flight_route()
@@ -406,7 +406,6 @@ func build_game() -> void:
 			build_choices(false)
 			build_reward_summary("CURRENT DAY", str(GameManager.days))
 			build_item_lists()
-		"event": build_event()
 		"story": build_story()
 		"relic":
 			pixel_divider()
@@ -608,22 +607,6 @@ func adapt_layout() -> void:
 			var image: TextureRect = row.get_child(0)
 			image.custom_minimum_size = Vector2(120, 120) if wide else (Vector2(100, 100) if GameManager.phase == "relic" else Vector2(82, 82))
 			fit_card(card, row)
-
-func build_event() -> void:
-	var event := FlightCatalog.find_item(FlightCatalog.EVENTS, GameManager.event_id)
-	label_text("A LITTLE SETBACK" if event.negative else "A LITTLE GOOD LUCK", 13, FlightStyle.BURGUNDY)
-	label_text(event.title, 27)
-	artwork(event.id, 175, "events", event.icon)
-	label_text(event.description, 18)
-	label_text(GameManager.event_result, 23, FlightStyle.GOAL_RED if event.negative else FlightStyle.SAVINGS_GREEN)
-	label_text("Savings: " + currency(GameManager.money) + "  ·  Ticket: " + currency(GameManager.goal()), 15, FlightStyle.MUTED)
-	button("Continue", commit_event, true)
-
-func commit_event() -> void:
-	if decision_locked or GameManager.phase != "event":
-		return
-	decision_locked = true
-	GameManager.resolve_event()
 
 func build_story() -> void:
 	pixel_divider()

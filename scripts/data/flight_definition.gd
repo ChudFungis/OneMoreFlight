@@ -8,5 +8,4 @@ extends Resource
 @export var amount: float = 0.0
 @export var max_level: int = 0 # Zero denotes an unlimited-level ability.
 @export var price: float = 0.0
-@export var negative: bool = false
 @export var icon: Texture2D

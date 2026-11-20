@@ -47,7 +47,7 @@ func _ready() -> void:
 	add_label(content, "Effect", 15, FlightStyle.BURGUNDY)
 	add_label(content, item.description.get_slice("\n", 1), 16, FlightStyle.INK)
 	if is_relic and item.id == "bracelet":
-		add_label(content, "Applies to taps, passive work and event gifts. Interest is unaffected.", 15, FlightStyle.MUTED)
+		add_label(content, "Applies to taps, passive work and day-end cash. Interest is unaffected.", 15, FlightStyle.MUTED)
 	if not is_relic:
 		add_label(content, "Current: " + GameManager.ability_effect(item.id, level), 15, FlightStyle.MUTED)
 		add_label(content, "Next: " + GameManager.ability_effect(item.id, level + 1), 15, FlightStyle.MUTED)

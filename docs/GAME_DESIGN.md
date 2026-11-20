@@ -1,6 +1,6 @@
 # One More Flight — nine-ability redesign
 
-This owner-approved ability roster supersedes the earlier combo, refill, time-budget and level-cap rules. Story, artwork, chapter goals, event choices and keepsakes are unchanged. Numeric values are starting tuning values, not a claim of final balance or measured human pacing.
+This owner-approved ability roster supersedes the earlier combo, refill, time-budget and level-cap rules. Story, artwork, chapter goals and keepsakes are unchanged; events are removed. Numeric values are starting tuning values, not a claim of final balance or measured human pacing.
 
 ## Ability roster
 
@@ -34,28 +34,13 @@ At day-end, settle Willow’s cash (including the earnings keepsake multiplier),
 
 Volaris has no old 50% discount floor. Each level reduces the remaining ticket price by 8%; Passport independently applies its 12% keepsake reduction. No time, level, Nicky-growth or interest gameplay caps were added. Finite-number validation on loaded data remains corruption protection.
 
-## Rewards, events and migration
+## Rewards and migration
 
 After each below-goal workday, offer three distinct abilities. Each card chooses the new category with 65% probability or owned with 35%, conditional on available candidates, then selects uniformly within the category. All-owned/all-new fallback remains supported. Cards and details show current → next effects.
 
-After the ability reward, an automatic event occurs on every third completed below-goal chapter day. Events are uniformly selected from four positive and four negative definitions, excluding the immediately previous event. There is no additional polarity roll or separate weighting; long-run positive/negative share is equal, not a forced alternating sequence.
+After the ability reward, begin the next workday directly. No event scheduling, outcome logic, event definitions or event screen remain.
 
-| Stable ID | Event | Automatic result |
-| --- | --- | --- |
-| call | Josh Is Calling... Again | +1 second to all future workdays this chapter |
-| cancelled | Jake's Betrayal | Lose 10 base-tap equivalents |
-| dinner | One More Episode | Lose 15 base-tap equivalents |
-| gift | The Language Barrier | Current ticket price ×0.97 |
-| rain | The Domino Incident | Gain 20 base-tap equivalents |
-| repair | Fede's Shopping List | Lose 20 base-tap equivalents |
-| sale | Customs Has Questions | Lose 15 base-tap equivalents |
-| viral | Un Chico Serio | Gain 25 base-tap equivalents |
-
-Base-tap values remain $5/$10/$17.50 by chapter. Matching Underwear multiplies positive cash gifts but never penalties. Losses are limited to current savings, so there is no debt. Time bonuses stack with Well Rested and Norteno Playlist; repeat calls can add further chapter-long seconds. Event discounts stack multiplicatively with Volaris and Lip-Stained Passport. Neither a time event nor discount changes already completed days. All chapter event time/discount bonuses reset at the chapter boundary.
-
-GameManager applies the outcome when entering the event phase, saves the result and applied flag before rendering, and displays the exact gain/loss or lasting effect. There is one Continue outcome button (plus ordinary Pause/Save navigation). Continue acknowledges the saved result and then checks the chapter milestone. A winning event remains visible until acknowledged. No alternate outcomes, temporary charges or event-amplifier effects remain.
-
-Snapshot version 5 adds event_applied, event_result, chapter_event_seconds and chapter_event_discount, while retaining Nicky growth and browser-safe RNG state. Versions 1–4 still load. Pending old choice events migrate to one new outcome and are immediately saved as applied. Old temporary tap charges are discarded. A loaded, already-applied event never repeats its cash change or chapter bonus. Goals recompute from both owned ticket levels and the persisted chapter event multiplier, preserving stacked discounts. Old saves already at their goal bypass an obsolete pending event. Completed local records/settings retain their separate formats.
+Snapshot version 6 accepts versions 1–5. Old pending events are discarded without changing savings, completed-day counts, abilities, relics or results. Already-applied cash stays in savings. Previously earned chapter time/discount bonuses migrate to legacy_bonus_seconds and legacy_goal_discount, remain inert except for preserving their earned benefit, and reset on chapter change. Unclaimed free reward offers still require exactly one selection. Reached goals advance to the existing story without replaying end-of-day earnings.
 
 ## Updated keepsakes
 

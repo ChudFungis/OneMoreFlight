@@ -24,14 +24,14 @@ SceneManager="*res://scripts/managers/scene_manager.gd"
 
 [display]
 
-window/size/min_width=360
-window/size/min_height=640
 window/size/viewport_width=390
 window/size/viewport_height=844
 window/size/window_width_override=390
 window/size/window_height_override=844
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/size/min_width=360
+window/size/min_height=640
 
 [physics]
 
@@ -42,8 +42,3 @@ window/stretch/aspect="expand"
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-
-[input_devices]
-
-pointing/emulate_mouse_from_touch=true
-
